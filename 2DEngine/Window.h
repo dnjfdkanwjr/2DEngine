@@ -13,8 +13,6 @@
 #define STOP_CONSOLE()  {FreeConsole();}
 
 
-using uint = unsigned int;
-using uchar = unsigned char;
 
 namespace rp {
 

@@ -143,14 +143,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Direct3D12Device.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Const.h" />
     <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="Global.h" />
+    <ClInclude Include="Configuration.h" />
+    <ClInclude Include="Direct3D12Device.h" />
+    <ClInclude Include="DirectXHelper.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="Timer.h" />
     <ClInclude Include="Window.h" />

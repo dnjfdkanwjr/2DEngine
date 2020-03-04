@@ -4,13 +4,12 @@ using uint = unsigned int;
 using uchar = unsigned char;
 
 namespace global {
-	uint rtvDescriptorSize = 0;
-	uint cbvSrvDescriptorSize = 0;
-
+	extern uint gRtvDescriptorSize;
+	extern uint gCbvSrvDescriptorSize;
 }
 
-namespace constant {
+namespace konstant {
 	constexpr uint maxFrameCount = 2;
-
+	constexpr uint kBackBufferCount = 2;
 }
 

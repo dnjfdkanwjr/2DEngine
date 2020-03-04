@@ -1,7 +1,8 @@
 #include <iostream>
 #include "Window.h"
 #include "Timer.h"
-#include "Direct3D12Device.h"
+#include "DirectXDevice.h"
+
 auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmdLine, int nCmdShow)->int
 {
 
@@ -14,9 +15,12 @@ auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmd
 	MSG msg = {  };
 
 	auto timerInstance = rp::Timer::GetInstance();
-	auto device = rp::Direct3D12Device::GetInstance();
 	timerInstance->Init();
-	device->Init(rp::Window::getHWND(), rp::Window::getWidth(), rp::Window::getHeight());
+	
+	if (rp::DirectXDevice::Init(rp::Window::getHWND(), rp::Window::getWidth(), rp::Window::getHeight())) {
+		std::cout << "Direct X 12 Init Success" << std::endl;
+	}
+
 	while (WM_QUIT != msg.message) {
 
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -28,7 +32,7 @@ auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmd
 			timerInstance->Update();
 
 
-			std::cout << timerInstance->GetDelta() << std::endl;
+			//std::cout << timerInstance->GetDelta() << std::endl;
 		
 		}
 	}

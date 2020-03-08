@@ -16,7 +16,8 @@ auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmd
 
 	auto timerInstance = rp::Timer::GetInstance();
 	timerInstance->Init();
-	
+
+
 	if (rp::DirectXDevice::Init(rp::Window::getHWND(), rp::Window::getWidth(), rp::Window::getHeight())) {
 		std::cout << "Direct X 12 Init Success" << std::endl;
 	}
@@ -27,13 +28,15 @@ auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmd
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+
+			continue;
 		}
-		else {	
-			timerInstance->Update();
-			rp::DirectXDevice::Render();
-			//std::cout << timerInstance->GetDelta() << std::endl;
-		
-		}
+
+		rp::DirectXDevice::PrepareRender(255, 255, 1);
+		rp::DirectXDevice::Render();
+
+
+	
 	}
 
 }

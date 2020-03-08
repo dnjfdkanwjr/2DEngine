@@ -26,6 +26,9 @@ namespace rp {
 
         static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
         static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvHeap;
+
+		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvHeapForDearImGUI;
+
         static Microsoft::WRL::ComPtr<ID3D12Resource> swapChainBuff[konstant::kBackBufferCount];
         static Microsoft::WRL::ComPtr<ID3D12Resource> dsBuffer;
 
@@ -38,13 +41,17 @@ namespace rp {
 
 	private:
 		static bool CheckTearingSupport();
-    public:
+    
+		static void DearImGuiSetUp(HWND hWnd);
+	public:
 
         static bool Init(HWND hWnd, int width, int height);
-        static void Clear(unsigned char r, unsigned char g, unsigned char b);
+        static void PrepareRender(unsigned char r, unsigned char g, unsigned char b);
         static void Render();
         static void Reset(ID3D12PipelineState* pipelineState, bool alloc, bool view = false);
         static void Execute(bool flush);
+
+
 
         static Microsoft::WRL::ComPtr <ID3D12Resource> CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer);
         static Microsoft::WRL::ComPtr <ID3D12Device> GetDevice();

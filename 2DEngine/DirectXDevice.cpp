@@ -2,6 +2,7 @@
 #include "DirectXHelper.h"
 #include "d3dx12.h"
 
+
 #pragma comment ( lib, "d3d12.lib")
 #pragma comment ( lib, "D3DCompiler.lib")
 #pragma comment ( lib, "dxgi.lib")
@@ -20,6 +21,7 @@ Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> rp::DirectXDevice::commandList
 
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rp::DirectXDevice::rtvHeap{};
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rp::DirectXDevice::dsvHeap{};
+Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rp::DirectXDevice::srvHeapForDearImGUI{};
 Microsoft::WRL::ComPtr<ID3D12Resource> rp::DirectXDevice::swapChainBuff[konstant::kBackBufferCount]{};
 Microsoft::WRL::ComPtr<ID3D12Resource> rp::DirectXDevice::dsBuffer{};
 
@@ -47,6 +49,34 @@ bool rp::DirectXDevice::CheckTearingSupport()
 	return true;
 #endif
 	
+}
+
+void rp::DirectXDevice::DearImGuiSetUp(HWND hWnd)
+{
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	desc.NumDescriptors = 1;
+	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	if (rp::DirectXDevice::GetDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&srvHeapForDearImGUI)) != S_OK) {
+
+		return;
+	}
+
+	
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui_ImplWin32_Init(hWnd);
+	ImGui_ImplDX12_Init(
+		GetDevice().Get(),
+		1,
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		srvHeapForDearImGUI.Get(),
+		srvHeapForDearImGUI.Get()->GetCPUDescriptorHandleForHeapStart(),
+		srvHeapForDearImGUI.Get()->GetGPUDescriptorHandleForHeapStart()
+		);
 }
 
 bool DirectXDevice::Init(HWND hWnd, int width, int height)
@@ -157,6 +187,7 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
 
     if (device->CreateDescriptorHeap(&rtvHeapDesc, __uuidof(ID3D12DescriptorHeap), (void**)&rtvHeap) != S_OK)
     {
+
         return false;
     }
 
@@ -238,12 +269,15 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
     sissorRect = { 0, 0,width, height };
 
 
+	DearImGuiSetUp(hWnd);
+
+
     return true;
 }
 
 
 
-void  DirectXDevice::Clear(unsigned char r, unsigned char g, unsigned char b)
+void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned char b)
 {
 
     Reset(NULL, true);
@@ -276,6 +310,8 @@ void  DirectXDevice::Clear(unsigned char r, unsigned char g, unsigned char b)
     commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
 
 
+
+
     Execute(true);
 }
 
@@ -283,17 +319,31 @@ void  DirectXDevice::Clear(unsigned char r, unsigned char g, unsigned char b)
 
 void DirectXDevice::Render()
 {
+	Reset(NULL, true);
+	//static int i = 0;
+	//++i;
+	//if (true) {
+	//	ImGui_ImplDX12_NewFrame();
+	//	ImGui_ImplWin32_NewFrame();
+	//	ImGui::NewFrame();
 
-    Reset(NULL, true);
+	//	ImGui::Begin("Hello, world!");
+	//	ImGui::End();
+
+	//	commandList->SetDescriptorHeaps(1, &srvHeapForDearImGUI);
+	//	ImGui::Render();
+
+	//	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
+
+	//	Execute(true);
+	//}
+	Reset(NULL, true);
 
     D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuff[currentBackBuffer].Get(),
         D3D12_RESOURCE_STATE_RENDER_TARGET,
         D3D12_RESOURCE_STATE_PRESENT);
-
     commandList->ResourceBarrier(1, &barrier);
-
     Execute(true);
-
     swapChain->Present(0, 0);
 	currentBackBuffer = swapChain->GetCurrentBackBufferIndex();
 }
@@ -322,7 +372,7 @@ void DirectXDevice::Reset(ID3D12PipelineState* pipelineState, bool alloc, bool v
         D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
         D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-        unsigned int incSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+        static unsigned int incSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
         rtvHandle.ptr += incSize * currentBackBuffer;
 

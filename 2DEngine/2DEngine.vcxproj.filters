@@ -16,6 +16,12 @@
     <Filter Include="Lib">
       <UniqueIdentifier>{d5c2c97c-1c13-45eb-94bb-28cf1ee7fc22}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Lib\NewFilter1">
+      <UniqueIdentifier>{bfabffe6-0f12-4050-a5e6-735de00fbfe5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lib\IMGUI">
+      <UniqueIdentifier>{0ec78d78-245f-4c36-a5f7-bb8321ea2c4c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -32,6 +38,24 @@
     </ClCompile>
     <ClCompile Include="Configuration.cpp">
       <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="IMGUI\imgui.cpp">
+      <Filter>Lib\IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="IMGUI\imgui_demo.cpp">
+      <Filter>Lib\IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="IMGUI\imgui_draw.cpp">
+      <Filter>Lib\IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="IMGUI\imgui_impl_dx12.cpp">
+      <Filter>Lib\IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="IMGUI\imgui_impl_win32.cpp">
+      <Filter>Lib\IMGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="IMGUI\imgui_widgets.cpp">
+      <Filter>Lib\IMGUI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -51,10 +75,34 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="d3dx12.h">
-      <Filter>Lib</Filter>
+      <Filter>Lib\NewFilter1</Filter>
     </ClInclude>
     <ClInclude Include="DirectXHelper.h">
-      <Filter>Lib</Filter>
+      <Filter>Lib\NewFilter1</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUI\imconfig.h">
+      <Filter>Lib\IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUI\imgui.h">
+      <Filter>Lib\IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUI\imgui_impl_dx12.h">
+      <Filter>Lib\IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUI\imgui_impl_win32.h">
+      <Filter>Lib\IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUI\imgui_internal.h">
+      <Filter>Lib\IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUI\imstb_rectpack.h">
+      <Filter>Lib\IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUI\imstb_textedit.h">
+      <Filter>Lib\IMGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUI\imstb_truetype.h">
+      <Filter>Lib\IMGUI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -46,9 +46,9 @@ namespace rp {
         static void Reset(ID3D12PipelineState* pipelineState, bool alloc, bool view = false);
         static void Execute(bool flush);
 
-        static Microsoft::WRL::ComPtr < ID3D12Resource> CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer);
-        static Microsoft::WRL::ComPtr < ID3D12Device> GetDevice();
-        static Microsoft::WRL::ComPtr < ID3D12GraphicsCommandList> GetCommandList();
+        static Microsoft::WRL::ComPtr <ID3D12Resource> CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer);
+        static Microsoft::WRL::ComPtr <ID3D12Device> GetDevice();
+        static Microsoft::WRL::ComPtr <ID3D12GraphicsCommandList> GetCommandList();
 
     };
 }

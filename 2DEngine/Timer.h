@@ -8,9 +8,9 @@ namespace rp {
 	{
 
 	private:
-		std::chrono::time_point<std::chrono::system_clock>	curTime;
-		std::chrono::time_point<std::chrono::system_clock>	prevTime;
-		std::chrono::duration<float>						deltaTime;
+		std::chrono::time_point<std::chrono::system_clock>	curTime{};
+		std::chrono::time_point<std::chrono::system_clock>	prevTime{};
+		std::chrono::duration<float>						deltaTime{};
 
 
 	public:

@@ -30,8 +30,7 @@ auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmd
 		}
 		else {	
 			timerInstance->Update();
-
-
+			rp::DirectXDevice::Render();
 			//std::cout << timerInstance->GetDelta() << std::endl;
 		
 		}

@@ -261,9 +261,8 @@ void  DirectXDevice::Clear(unsigned char r, unsigned char g, unsigned char b)
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
 
-    unsigned int incSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-    rtvHandle.ptr += incSize * currentBackBuffer;
+    rtvHandle.ptr += global::gRtvDescriptorSize * currentBackBuffer;
 
 
     static float BGColor[4];

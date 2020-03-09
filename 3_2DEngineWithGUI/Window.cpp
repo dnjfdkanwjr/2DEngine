@@ -1,8 +1,9 @@
 #include <string>
 #include <iostream>
 #include "Window.h"
-
-
+#include "IMGUI/imgui.h"
+#include "IMGUI/imgui_impl_dx12.h"
+#include "DirectXDevice.h"
 bool						rp::Window::debug_console;
 HINSTANCE					rp::Window::handle_instance;
 WNDCLASSEX					rp::Window::window_class_ex;
@@ -20,11 +21,28 @@ int							rp::Window::fps{};
 float							rp::Window::cam_x = 30;
 float							rp::Window::cam_z = 45;
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 LRESULT CALLBACK rp::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+		return true;
+
 	switch (message)
 	{
+	case WM_SIZE:
+		if (!rp::DirectXDevice::GetDevice()) {
+			return 0;
+		}
+
+		if (wParam != SIZE_MINIMIZED) {
+			ImGui_ImplDX12_InvalidateDeviceObjects();
+			//CleanupRenderTarget();
+			//rp::DirectXDevice::ResizeSwapChain(hWnd, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
+		
+			ImGui_ImplDX12_CreateDeviceObjects();
+		}
+		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;

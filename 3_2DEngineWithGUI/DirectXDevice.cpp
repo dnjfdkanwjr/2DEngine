@@ -1,4 +1,6 @@
-﻿#include "DirectXDevice.h"
+﻿#include <iostream>
+
+#include "DirectXDevice.h"
 #include "DirectXHelper.h"
 #include "d3dx12.h"
 #include "IMGUI/imgui.h"
@@ -19,7 +21,10 @@ Microsoft::WRL::ComPtr<IDXGISwapChain3> rp::DirectXDevice::swapChain{};
 Microsoft::WRL::ComPtr<ID3D12Device> rp::DirectXDevice::device{};
 Microsoft::WRL::ComPtr<ID3D12Fence> rp::DirectXDevice::fence{};
 Microsoft::WRL::ComPtr<ID3D12CommandQueue>rp::DirectXDevice::commandQueue{};
-Microsoft::WRL::ComPtr<ID3D12CommandAllocator>rp::DirectXDevice::commandAllocator{};
+//Microsoft::WRL::ComPtr<ID3D12CommandAllocator>rp::DirectXDevice::commandAllocator{};
+
+std::vector<AllocatorWithFence> rp::DirectXDevice::commandAllocators{};
+
 Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> rp::DirectXDevice::commandList{};
 
 
@@ -32,8 +37,8 @@ Microsoft::WRL::ComPtr<ID3D12Resource> rp::DirectXDevice::dsBuffer{};
 D3D12_VIEWPORT   rp::DirectXDevice::viewRect{};
 D3D12_RECT       rp::DirectXDevice::sissorRect{};
 int    rp::DirectXDevice::currentBackBuffer{ 0 };
-UINT64 rp::DirectXDevice::fenceValue{ 0 };
-HANDLE rp::DirectXDevice::fenceEvent{};
+uint	rp::DirectXDevice::currentAllocatorIndex{};
+UINT64 rp::DirectXDevice::fenceValue{0};
 bool   rp::DirectXDevice::isTearingSupport{false};
 
 bool rp::DirectXDevice::CheckTearingSupport()
@@ -75,7 +80,7 @@ void rp::DirectXDevice::DearImGuiSetUp(HWND hWnd)
 	ImGui_ImplWin32_Init(hWnd);
 	ImGui_ImplDX12_Init(
 		GetDevice().Get(),
-		1,
+		konstant::kNumberOfAllocators,
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		srvHeapForDearImGUI.Get(),
 		srvHeapForDearImGUI.Get()->GetCPUDescriptorHandleForHeapStart(),
@@ -83,10 +88,15 @@ void rp::DirectXDevice::DearImGuiSetUp(HWND hWnd)
 		);
 }
 
+void rp::DirectXDevice::FlushCommands()
+{
+}
+
 bool DirectXDevice::Init(HWND hWnd, int width, int height)
 {
 	UINT dxgiFactoryFlags = 0;
 	using Microsoft::WRL::ComPtr;
+
 #if defined(_DEBUG)
 	// Enable the debug layer (requires the Graphics Tools "optional feature").
 	// NOTE: Enabling the debug layer after device creation will invalidate the active device.
@@ -101,9 +111,8 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
 		}
 	}
 #endif
+
 	ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
-
-
 
     if (D3D12CreateDevice(NULL, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), (void**)&device) != S_OK)
     {
@@ -116,8 +125,6 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
         return false;
     }
 
-
-    fenceEvent = CreateEventEx(NULL, FALSE, FALSE, EVENT_ALL_ACCESS);
 
     D3D12_COMMAND_QUEUE_DESC queueDesc;
     ZeroMemory(&queueDesc, sizeof(D3D12_COMMAND_QUEUE_DESC));
@@ -132,20 +139,16 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
     }
 
 
-    if (device->CreateCommandAllocator(queueDesc.Type, __uuidof(ID3D12CommandAllocator), (void**)&commandAllocator) != S_OK)
+	for (int i = 0; i < konstant::kNumberOfAllocators; ++i) {
+		commandAllocators.emplace_back(queueDesc, device.Get());
+	}
+
+
+    if (device->CreateCommandList(0, queueDesc.Type, commandAllocators[currentAllocatorIndex].GetAllocator().Get(), NULL, __uuidof(ID3D12GraphicsCommandList), (void**)&commandList) != S_OK)
     {
-        return false;
-
-    }
-
-
-    if (device->CreateCommandList(0, queueDesc.Type, commandAllocator.Get(), NULL, __uuidof(ID3D12GraphicsCommandList), (void**)&commandList) != S_OK)
-    {
-
         return false;
     }
 
-    commandList->Close();
 
 	isTearingSupport = CheckTearingSupport();
 
@@ -257,35 +260,74 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
     }
 
 
+	viewRect = { 0.0f, 0.0f, (float)width, float(height), 0.0f, 1.0f };
+	sissorRect = { 0, 0,width, height };
+
+
 
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
     device->CreateDepthStencilView(dsBuffer.Get(), NULL, dsvHandle); 
 
-
     D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(dsBuffer.Get(),
         D3D12_RESOURCE_STATE_COMMON,
         D3D12_RESOURCE_STATE_DEPTH_WRITE);
+
+
+	//Temporary Codes For Making Resource
+	auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
+	alloc->Reset();
+
+	commandList->Reset(alloc, nullptr);
     commandList->ResourceBarrier(1, &barrier);
 
-
-
-    viewRect = { 0.0f, 0.0f, (float)width, float(height), 0.0f, 1.0f };
-    sissorRect = { 0, 0,width, height };
-
+	Execute();
+	WaitForLastFrameGPUSynchronization();
 
 	DearImGuiSetUp(hWnd);
-
+	//
 
     return true;
 }
 
 
 
+void rp::DirectXDevice::WaitForLastFrameGPUSynchronization()
+{
+	while (fence.Get()->GetCompletedValue() < commandAllocators[currentAllocatorIndex].GetFenceValue())
+	{
+		std::cout << "이전 팬스 벨류 " << commandAllocators[currentAllocatorIndex].GetFenceValue() << "현 팬스 벨류 " << fenceValue << std::endl;
+
+		std::cout << "동기화 중 " << std::endl;
+		_YIELD_PROCESSOR();
+	}
+}
+
+void rp::DirectXDevice::WaitForNextFrameGPUSynchronization()
+{
+	currentAllocatorIndex = ( currentAllocatorIndex + 1 ) % konstant::kNumberOfAllocators;
+	std::cout << "이전 팬스 벨류 " << commandAllocators[currentAllocatorIndex].GetFenceValue() << " COM 팬스 벨류 " << fence.Get()->GetCompletedValue() << std::endl;
+
+
+	while (fence.Get()->GetCompletedValue() < commandAllocators[currentAllocatorIndex].GetFenceValue() && commandAllocators[currentAllocatorIndex].GetFenceValue() != 0)
+	{
+		std::cout << "이전 팬스 벨류 " << commandAllocators[currentAllocatorIndex].GetFenceValue() << "현 팬스 벨류 " << fenceValue << std::endl;
+
+		std::cout << "동기화 중 " << std::endl;
+		_YIELD_PROCESSOR();
+	}
+}
+
 void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned char b)
 {
-	commandAllocator->Reset();
-	commandList->Reset(commandAllocator.Get(),  nullptr);
+	WaitForNextFrameGPUSynchronization();
+
+	auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
+	alloc->Reset();
+
+	commandList->Reset(alloc,  nullptr);
 	currentBackBuffer = swapChain->GetCurrentBackBufferIndex();
+
+
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -323,6 +365,7 @@ void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned cha
 		ImGui::End();
 	}
 
+
 	if (show_another_window)
 	{
 		ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
@@ -339,87 +382,30 @@ void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned cha
 }
 
 
-
 void DirectXDevice::Render()
 {
-    D3D12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuff[currentBackBuffer].Get(),
-        D3D12_RESOURCE_STATE_RENDER_TARGET,
-        D3D12_RESOURCE_STATE_PRESENT);
+	D3D12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuff[currentBackBuffer].Get(),D3D12_RESOURCE_STATE_RENDER_TARGET,D3D12_RESOURCE_STATE_PRESENT) };
     commandList->ResourceBarrier(1, &barrier);
-    Execute(true);
-    swapChain->Present(0, 0);
-}
-
-
-
-void DirectXDevice::Reset(ID3D12PipelineState* pipelineState, bool alloc, bool view)
-{
-    if (alloc == true)
-    {
-        if (commandAllocator->Reset() != S_OK)
-        {
-
-        }
-    }
-
-
-    if (commandList->Reset(commandAllocator.Get(), pipelineState) != S_OK)
-    {
-
-    }
-
-    if (view == true)
-    {
-
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
-        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
-
-        static unsigned int incSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-        rtvHandle.ptr += incSize * currentBackBuffer;
-
-
-        commandList->RSSetViewports(1, &viewRect);
-        commandList->RSSetScissorRects(1, &sissorRect);
-
-        commandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
-    }
+	Execute();
+	swapChain->Present(0, 0);
 
 }
 
 
-
-void DirectXDevice::Execute(bool flush)
+void DirectXDevice::Execute()
 {
     commandList->Close();
-
-    ID3D12CommandList* cmdLists[1] = { commandList.Get()};
-
+    ID3D12CommandList* cmdLists[1] = { commandList.Get()};	
     commandQueue->ExecuteCommandLists(1, cmdLists);
-
-    if (flush == true)
-    {
-        fenceValue++;
-
-        if (commandQueue->Signal(fence.Get(), fenceValue) == S_OK)
-        {
-            while(fence->GetCompletedValue() < fenceValue)
-            {
-                _YIELD_PROCESSOR();
-            }
-        }
-    }
+	ThrowIfFailed(commandQueue->Signal(fence.Get(), ++fenceValue));
+	commandAllocators[currentAllocatorIndex].SetFenceValue(fenceValue);
 }
-
-
-
-
 
 
 Microsoft::WRL::ComPtr<ID3D12Resource> DirectXDevice::CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer)
 {
 
-    Reset(NULL, true);
+    //Reset(NULL, true);
 
     ID3D12Resource* defaultBuffer = NULL;
     D3D12_RESOURCE_DESC   buffer = CD3DX12_RESOURCE_DESC::Buffer(size);
@@ -476,7 +462,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DirectXDevice::CreateBuffer(void* initDat
 
     commandList->ResourceBarrier(1, &barrier);
 
-    Execute(true);
+    Execute();
     return defaultBuffer;
 }
 
@@ -492,4 +478,48 @@ Microsoft::WRL::ComPtr<ID3D12Device> DirectXDevice::GetDevice()
 Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DirectXDevice::GetCommandList()
 {
     return commandList;
+}
+
+void rp::DirectXDevice::ResizeSwapChain(HWND hWnd, int width, int height)
+{
+
+
+	//Reset(nullptr,true);
+	DXGI_SWAP_CHAIN_DESC1 sd;
+	swapChain->GetDesc1(&sd);
+	sd.Width = width;
+	sd.Height = height;
+
+
+	ComPtr<IDXGISwapChain1> swapChainLocal;
+
+	ThrowIfFailed(factory->CreateSwapChainForHwnd(
+		commandQueue.Get(),        // Swap chain needs the queue so that it can force a flush on it.
+		hWnd,
+		&sd,
+		nullptr,
+		nullptr,
+		&swapChainLocal
+	));
+
+	if (isTearingSupport)
+	{
+		// When tearing support is enabled we will handle ALT+Enter key presses in the
+		// window message loop rather than let DXGI handle it by calling SetFullscreenState.
+		factory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER);
+	}
+
+	(swapChainLocal->QueryInterface(IID_PPV_ARGS(&swapChain)));
+
+	Execute();
+
+	//IDXGISwapChain1* swapChain1 =  nullptr;
+	//swapChain1->QueryInterface(IID_PPV_ARGS(&swapChain));
+	//swapChain1->Release();
+	//dxgiFactory->Release();
+	//
+
+
+	//swapChain->SetMaximumFrameLatency(2);
+
 }

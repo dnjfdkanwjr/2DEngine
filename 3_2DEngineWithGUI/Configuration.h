@@ -11,5 +11,7 @@ namespace global {
 namespace konstant {
 	constexpr uint maxFrameCount = 2;
 	constexpr uint kBackBufferCount = 2;
+
+	constexpr uint kNumberOfAllocators = 3;
 }
 

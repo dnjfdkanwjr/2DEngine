@@ -4,20 +4,19 @@
 
 namespace rp {
 
-	class Timer : public Singleton<Timer>
+	class RpTimer
 	{
 
 	private:
-		std::chrono::time_point<std::chrono::system_clock>	curTime{};
-		std::chrono::time_point<std::chrono::system_clock>	prevTime{};
-		std::chrono::duration<float>						deltaTime{};
+		static std::chrono::time_point<std::chrono::high_resolution_clock>	curTime;
+		static std::chrono::time_point<std::chrono::high_resolution_clock>	prevTime;
+		static std::chrono::duration<float>									deltaTime;
 
 
 	public:
-		void Init();
-		void Update();
-		float GetDelta() const;
-		
+		static void Init();
+		static void Update();
+		static float GetDelta();
 	};
 
 }

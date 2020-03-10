@@ -2,23 +2,21 @@
 #include "Window.h"
 #include "Timer.h"
 #include "DirectXDevice.h"
+#include "GraphicUserInterface.h"
+
+#include "Framework.h"
 
 auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmdLine, int nCmdShow)->int
 {
-
 	if (!rp::Window::init(true, hInstance, nCmdShow,
 		TEXT("2DEngine Test"),
 		TEXT("2DEngine Test"))) {
 	}
 
-	if (rp::DirectXDevice::Init(rp::Window::getHWND(), rp::Window::getWidth(), rp::Window::getHeight())) {
-		std::cout << "Direct X 12 Init Success" << std::endl;
-	}
+	rp::RpFramework::Init();
 
 	MSG msg = {  };
 
-	auto timerInstance = rp::Timer::GetInstance();
-	timerInstance->Init();
 
 	while (WM_QUIT != msg.message) {
 
@@ -26,14 +24,12 @@ auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmd
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-
 			continue;
 		}
-		rp::DirectXDevice::PrepareRender(25, 25, 25);
 
-		rp::DirectXDevice::Render();
-
+		rp::RpFramework::Update();
 	}
+
 
 }
 

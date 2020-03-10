@@ -51,8 +51,6 @@ namespace rp {
         static Microsoft::WRL::ComPtr<ID3D12Fence>fence;
         static Microsoft::WRL::ComPtr<ID3D12CommandQueue>commandQueue;
 
-        //static Microsoft::WRL::ComPtr<ID3D12CommandAllocator>commandAllocator;
-
 		static std::vector<AllocatorWithFence> commandAllocators;
 
         static Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
@@ -61,23 +59,20 @@ namespace rp {
         static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
         static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvHeap;
 
-		static Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> srvHeapForDearImGUI;
-
         static Microsoft::WRL::ComPtr<ID3D12Resource> swapChainBuff[konstant::kBackBufferCount];
         static Microsoft::WRL::ComPtr<ID3D12Resource> dsBuffer;
 
         static D3D12_VIEWPORT   viewRect;
         static D3D12_RECT       sissorRect;
-        static int    currentBackBuffer;
-		static uint currentAllocatorIndex;
-		static UINT64 fenceValue;
-		static bool   isTearingSupport;
 
+        static uint currentBackBuffer;
+		static uint currentAllocatorIndex;
+
+		static UINT64 fenceValue;
+
+		static bool   isTearingSupport;
 	private:
 		static bool CheckTearingSupport();
-    
-		static void DearImGuiSetUp(HWND hWnd);
-
 		static void FlushCommands();
 	public:
 
@@ -86,20 +81,16 @@ namespace rp {
 		static void WaitForLastFrameGPUSynchronization();
 		static void WaitForNextFrameGPUSynchronization();
 
-        static void PrepareRender(unsigned char r, unsigned char g, unsigned char b);
+        static void PrepareRender(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 		static void Render();
-
-
         static void Execute();
 
+		static Microsoft::WRL::ComPtr <ID3D12Device> GetDevice();
+		static Microsoft::WRL::ComPtr <ID3D12GraphicsCommandList> GetCommandList();
 
 
         static Microsoft::WRL::ComPtr <ID3D12Resource> CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer);
-        static Microsoft::WRL::ComPtr <ID3D12Device> GetDevice();
-        static Microsoft::WRL::ComPtr <ID3D12GraphicsCommandList> GetCommandList();
-
 		static void ResizeSwapChain(HWND hWnd, int width, int height);
-
     };
 }
 

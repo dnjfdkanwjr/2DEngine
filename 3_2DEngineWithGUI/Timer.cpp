@@ -1,20 +1,26 @@
 #include <Windows.h>
 #include "Timer.h"
 
-void rp::Timer::Init()
+std::chrono::time_point<std::chrono::high_resolution_clock>	 rp::RpTimer::curTime{};
+std::chrono::time_point<std::chrono::high_resolution_clock>	 rp::RpTimer::prevTime{};
+std::chrono::duration<float>						 rp::RpTimer::deltaTime{};
+
+
+void rp::RpTimer::Init()
 {
-	this->curTime = std::chrono::system_clock::now();
-	this->prevTime = std::chrono::system_clock::now();
+	curTime = std::chrono::high_resolution_clock::now();
+	prevTime = std::chrono::high_resolution_clock::now();
 }
 
-void rp::Timer::Update()
+void rp::RpTimer::Update()
 {
-	this->curTime = std::chrono::system_clock::now();
-	this->deltaTime = (this->curTime - this->prevTime);
-	this->prevTime = this->curTime;
+	curTime = std::chrono::high_resolution_clock::now();
+	deltaTime = (curTime - prevTime);
+	prevTime = curTime;
 }
 
-float rp::Timer::GetDelta() const
+
+float rp::RpTimer::GetDelta()
 {
-	return this->deltaTime.count();
+	return deltaTime.count();
 }

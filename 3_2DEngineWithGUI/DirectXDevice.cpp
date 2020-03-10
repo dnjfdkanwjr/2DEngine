@@ -1,11 +1,9 @@
 ﻿#include <iostream>
-
+#include <thread>
 #include "DirectXDevice.h"
 #include "DirectXHelper.h"
 #include "d3dx12.h"
-#include "IMGUI/imgui.h"
-#include "IMGUI/imgui_impl_win32.h"
-#include "IMGUI/imgui_impl_dx12.h"
+
 
 
 
@@ -21,7 +19,6 @@ Microsoft::WRL::ComPtr<IDXGISwapChain3> rp::DirectXDevice::swapChain{};
 Microsoft::WRL::ComPtr<ID3D12Device> rp::DirectXDevice::device{};
 Microsoft::WRL::ComPtr<ID3D12Fence> rp::DirectXDevice::fence{};
 Microsoft::WRL::ComPtr<ID3D12CommandQueue>rp::DirectXDevice::commandQueue{};
-//Microsoft::WRL::ComPtr<ID3D12CommandAllocator>rp::DirectXDevice::commandAllocator{};
 
 std::vector<AllocatorWithFence> rp::DirectXDevice::commandAllocators{};
 
@@ -30,13 +27,14 @@ Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> rp::DirectXDevice::commandList
 
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rp::DirectXDevice::rtvHeap{};
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rp::DirectXDevice::dsvHeap{};
-Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rp::DirectXDevice::srvHeapForDearImGUI{};
+
+
 Microsoft::WRL::ComPtr<ID3D12Resource> rp::DirectXDevice::swapChainBuff[konstant::kBackBufferCount]{};
 Microsoft::WRL::ComPtr<ID3D12Resource> rp::DirectXDevice::dsBuffer{};
 
 D3D12_VIEWPORT   rp::DirectXDevice::viewRect{};
 D3D12_RECT       rp::DirectXDevice::sissorRect{};
-int    rp::DirectXDevice::currentBackBuffer{ 0 };
+uint    rp::DirectXDevice::currentBackBuffer{ 0 };
 uint	rp::DirectXDevice::currentAllocatorIndex{};
 UINT64 rp::DirectXDevice::fenceValue{0};
 bool   rp::DirectXDevice::isTearingSupport{false};
@@ -60,33 +58,7 @@ bool rp::DirectXDevice::CheckTearingSupport()
 	
 }
 
-void rp::DirectXDevice::DearImGuiSetUp(HWND hWnd)
-{
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	desc.NumDescriptors = 1;
-	desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 
-	if (rp::DirectXDevice::GetDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&srvHeapForDearImGUI)) != S_OK) {
-
-		return;
-	}
-
-	
-
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	ImGui_ImplWin32_Init(hWnd);
-	ImGui_ImplDX12_Init(
-		GetDevice().Get(),
-		konstant::kNumberOfAllocators,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		srvHeapForDearImGUI.Get(),
-		srvHeapForDearImGUI.Get()->GetCPUDescriptorHandleForHeapStart(),
-		srvHeapForDearImGUI.Get()->GetGPUDescriptorHandleForHeapStart()
-		);
-}
 
 void rp::DirectXDevice::FlushCommands()
 {
@@ -283,9 +255,6 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
 	Execute();
 	WaitForLastFrameGPUSynchronization();
 
-	DearImGuiSetUp(hWnd);
-	//
-
     return true;
 }
 
@@ -295,44 +264,29 @@ void rp::DirectXDevice::WaitForLastFrameGPUSynchronization()
 {
 	while (fence.Get()->GetCompletedValue() < commandAllocators[currentAllocatorIndex].GetFenceValue())
 	{
-		std::cout << "이전 팬스 벨류 " << commandAllocators[currentAllocatorIndex].GetFenceValue() << "현 팬스 벨류 " << fenceValue << std::endl;
-
-		std::cout << "동기화 중 " << std::endl;
-		_YIELD_PROCESSOR();
+		std::this_thread::yield();
 	}
 }
 
 void rp::DirectXDevice::WaitForNextFrameGPUSynchronization()
 {
 	currentAllocatorIndex = ( currentAllocatorIndex + 1 ) % konstant::kNumberOfAllocators;
-	std::cout << "이전 팬스 벨류 " << commandAllocators[currentAllocatorIndex].GetFenceValue() << " COM 팬스 벨류 " << fence.Get()->GetCompletedValue() << std::endl;
-
-
-	while (fence.Get()->GetCompletedValue() < commandAllocators[currentAllocatorIndex].GetFenceValue() && commandAllocators[currentAllocatorIndex].GetFenceValue() != 0)
-	{
-		std::cout << "이전 팬스 벨류 " << commandAllocators[currentAllocatorIndex].GetFenceValue() << "현 팬스 벨류 " << fenceValue << std::endl;
-
-		std::cout << "동기화 중 " << std::endl;
-		_YIELD_PROCESSOR();
-	}
+	WaitForLastFrameGPUSynchronization();
 }
 
-void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned char b)
+void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
 	WaitForNextFrameGPUSynchronization();
-
 	auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
 	alloc->Reset();
 
-	commandList->Reset(alloc,  nullptr);
+	commandList->Reset(alloc,  nullptr);	
+
 	currentBackBuffer = swapChain->GetCurrentBackBufferIndex();
-
-
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
-	static unsigned int incSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	rtvHandle.ptr += incSize * currentBackBuffer;
+	rtvHandle.ptr += (unsigned long long)global::gRtvDescriptorSize * currentBackBuffer;
 
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -342,43 +296,14 @@ void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned cha
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
 
-	static ImVec4 clear_color2 = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	static float clearColor[4] = { (float)r/ 255.f,(float)g / 255.f,(float)b / 255.f, (float)a / 255.f, };
 
 	commandList->ResourceBarrier(1, &barrier);
-	commandList->ClearRenderTargetView(rtvHandle, (float*)&clear_color2, 0, NULL);
+
+	commandList->ClearRenderTargetView(rtvHandle, (float*)&clearColor, 0, NULL);
 	commandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
 	commandList->RSSetViewports(1, &viewRect);
 	commandList->RSSetScissorRects(1, &sissorRect);
-
-	static bool show_demo_window = true;
-	static bool show_another_window = true;
-	static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-	// Start the Dear ImGui frame
-	ImGui_ImplDX12_NewFrame();
-	ImGui_ImplWin32_NewFrame();
-	ImGui::NewFrame();
-
-
-	{
-		ImGui::Begin("Hello, world!");
-		ImGui::End();
-	}
-
-
-	if (show_another_window)
-	{
-		ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-		ImGui::Text("Hello from another window!");
-		if (ImGui::Button("Close Me"))
-			show_another_window = false;
-		ImGui::End();
-	}
-
-	commandList->SetDescriptorHeaps(1, srvHeapForDearImGUI.GetAddressOf());
-	ImGui::Render();
-	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList.Get());
-
 }
 
 

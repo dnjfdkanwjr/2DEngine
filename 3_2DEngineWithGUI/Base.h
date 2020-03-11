@@ -3,13 +3,13 @@
 namespace rp {
 	class Base
 	{
-	private:
+	protected:
 		std::string name{};
 		bool state{};
 
 
 	public:
-		Base(std::string&& name = "GameObject");
+		Base(std::string&& name);
 		virtual ~Base();
 
 		void SetName(std::string&& name)noexcept;

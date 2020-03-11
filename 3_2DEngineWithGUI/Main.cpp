@@ -29,8 +29,8 @@ auto APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrecInstace, LPWSTR lpCmd
 
 		rp::RpFramework::Update();
 	}
-
-
+	rp::RpFramework::Exit();
+	::DestroyWindow(rp::Window::getHWND());
 }
 
 

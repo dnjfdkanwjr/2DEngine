@@ -11,6 +11,7 @@ namespace rp {
 		static void Init();
 		static void Update();
 
+		static void Exit();
 	};
 }
 

@@ -13,7 +13,7 @@ namespace rp {
 		static void Init(HWND hwnd);
 		static void PrepareRender();
 		static void Render();
-
+		static void Exit();
 	};
 }
 

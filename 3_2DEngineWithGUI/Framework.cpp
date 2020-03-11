@@ -8,7 +8,6 @@
 
 void rp::RpFramework::Init()
 {
-
 	if (rp::DirectXDevice::Init(rp::Window::getHWND(), rp::Window::getWidth(), rp::Window::getHeight())) {
 		std::cout << "Direct X 12 Init Success" << std::endl;
 	}
@@ -26,6 +25,12 @@ void rp::RpFramework::Update()
 
 	PrepareRender();
 	Render();
+}
+
+void rp::RpFramework::Exit()
+{
+	rp::DirectXDevice::WaitForLastFrameGPUSynchronization();
+	rp::GraphicUserInterface::Exit();
 }
 
 void rp::RpFramework::PrepareRender()

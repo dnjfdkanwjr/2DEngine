@@ -79,3 +79,12 @@ void rp::GraphicUserInterface::Render()
 	ImGui::Render();
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), rp::GraphicUserInterface::cachedCommandList.Get());
 }
+
+void rp::GraphicUserInterface::Exit()
+{
+
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
+}

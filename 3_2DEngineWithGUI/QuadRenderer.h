@@ -1,13 +1,16 @@
 #pragma once
-#include "Singleton.h"
+#include "DirectXDevice.h"
+#include "Renderer.h"
 
 namespace rp {
 
 	class QuadRenderer :
-		public Singleton<QuadRenderer>
+		public IRenderer
 	{
-
+		
+	public:
+		QuadRenderer();
+		virtual~QuadRenderer();
 	};
-
 }
 

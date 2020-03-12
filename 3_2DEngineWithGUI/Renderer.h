@@ -1,4 +1,5 @@
 #pragma once
+#include "DirectXDevice.h"
 #include "Component.h"
 #include "Singleton.h"
 namespace rp {
@@ -7,20 +8,23 @@ namespace rp {
 	class IRenderer:
 		public Singleton<IRenderer>
 	{
-
+	protected:
+		Microsoft::WRL::ComPtr<ID3D12PipelineState> pso{};
 	public:
-		IRenderer(std::string&& vs, std::string&& ps);
-		virtual ~IRenderer();
 
+		IRenderer();
+
+		virtual ~IRenderer();
 		virtual void Draw();
 	};
+
 
 
 
 	class RendererWrapper :
 		public Component
 	{
-		IRenderer* renderer;
+		IRenderer* renderer{};
 	public:
 		RendererWrapper(RpGameObject* gameObject,std::string&& name = "Renderer");
 		virtual ~RendererWrapper();

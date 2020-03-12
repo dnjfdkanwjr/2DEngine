@@ -1,11 +1,9 @@
 ﻿#include <iostream>
 #include <thread>
+
 #include "DirectXDevice.h"
 #include "DirectXHelper.h"
 #include "d3dx12.h"
-
-
-
 
 #pragma comment ( lib, "d3d12.lib")
 #pragma comment ( lib, "D3DCompiler.lib")
@@ -15,20 +13,13 @@ using namespace rp;
 
 Microsoft::WRL::ComPtr<IDXGIFactory4> rp::DirectXDevice::factory{};
 Microsoft::WRL::ComPtr<IDXGISwapChain3> rp::DirectXDevice::swapChain{};
-
 Microsoft::WRL::ComPtr<ID3D12Device> rp::DirectXDevice::device{};
 Microsoft::WRL::ComPtr<ID3D12Fence> rp::DirectXDevice::fence{};
 Microsoft::WRL::ComPtr<ID3D12CommandQueue>rp::DirectXDevice::commandQueue{};
-
 std::vector<AllocatorWithFence> rp::DirectXDevice::commandAllocators{};
-
 Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> rp::DirectXDevice::commandList{};
-
-
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rp::DirectXDevice::rtvHeap{};
 Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rp::DirectXDevice::dsvHeap{};
-
-
 Microsoft::WRL::ComPtr<ID3D12Resource> rp::DirectXDevice::swapChainBuff[konstant::kBackBufferCount]{};
 Microsoft::WRL::ComPtr<ID3D12Resource> rp::DirectXDevice::dsBuffer{};
 
@@ -59,9 +50,12 @@ bool rp::DirectXDevice::CheckTearingSupport()
 }
 
 
-
+//this function is for waiting for finishing current frame rendering 
+//and stopping next rendering.
+//[deprecated]
 void rp::DirectXDevice::FlushCommands()
 {
+
 }
 
 bool DirectXDevice::Init(HWND hWnd, int width, int height)
@@ -236,7 +230,6 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
 	sissorRect = { 0, 0,width, height };
 
 
-
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
     device->CreateDepthStencilView(dsBuffer.Get(), NULL, dsvHandle); 
 
@@ -248,11 +241,10 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
 	//Temporary Codes For Making Resource
 	auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
 	alloc->Reset();
-
 	commandList->Reset(alloc, nullptr);
     commandList->ResourceBarrier(1, &barrier);
 
-	Execute();
+	FlushAllCommandsToGPU();
 	WaitForLastFrameGPUSynchronization();
 
     return true;
@@ -277,17 +269,15 @@ void rp::DirectXDevice::WaitForNextFrameGPUSynchronization()
 void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
 	WaitForNextFrameGPUSynchronization();
+
 	auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
 	alloc->Reset();
-
 	commandList->Reset(alloc,  nullptr);	
 
 	currentBackBuffer = swapChain->GetCurrentBackBufferIndex();
-
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	rtvHandle.ptr += (unsigned long long)global::gRtvDescriptorSize * currentBackBuffer;
-
 	D3D12_RESOURCE_BARRIER barrier = {};
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
@@ -311,13 +301,12 @@ void DirectXDevice::Render()
 {
 	D3D12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuff[currentBackBuffer].Get(),D3D12_RESOURCE_STATE_RENDER_TARGET,D3D12_RESOURCE_STATE_PRESENT) };
     commandList->ResourceBarrier(1, &barrier);
-	Execute();
+	FlushAllCommandsToGPU();
 	swapChain->Present(0, 0);
 
 }
 
-
-void DirectXDevice::Execute()
+void DirectXDevice::FlushAllCommandsToGPU()
 {
     commandList->Close();
     ID3D12CommandList* cmdLists[1] = { commandList.Get()};	
@@ -387,7 +376,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DirectXDevice::CreateBuffer(void* initDat
 
     commandList->ResourceBarrier(1, &barrier);
 
-    Execute();
+    FlushAllCommandsToGPU();
     return defaultBuffer;
 }
 
@@ -405,6 +394,8 @@ Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DirectXDevice::GetCommandList(
     return commandList;
 }
 
+//need to be revised
+//currently swap chain creation is failed.
 void rp::DirectXDevice::ResizeSwapChain(HWND hWnd, int width, int height)
 {
 
@@ -436,7 +427,7 @@ void rp::DirectXDevice::ResizeSwapChain(HWND hWnd, int width, int height)
 
 	(swapChainLocal->QueryInterface(IID_PPV_ARGS(&swapChain)));
 
-	Execute();
+	FlushAllCommandsToGPU();
 
 	//IDXGISwapChain1* swapChain1 =  nullptr;
 	//swapChain1->QueryInterface(IID_PPV_ARGS(&swapChain));
@@ -447,4 +438,43 @@ void rp::DirectXDevice::ResizeSwapChain(HWND hWnd, int width, int height)
 
 	//swapChain->SetMaximumFrameLatency(2);
 
+}
+
+
+Microsoft::WRL::ComPtr<ID3DBlob> rp::DirectXDevice::CompileShader(LPCWSTR fileName, LPCSTR entry, LPCSTR target)
+{
+	HRESULT hr;
+
+	Microsoft::WRL::ComPtr<ID3DBlob> byteCode = nullptr;
+	Microsoft::WRL::ComPtr<ID3DBlob> errorBlob;
+
+
+	hr = D3DCompileFromFile(fileName,
+		NULL,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		entry,
+		target,
+		0,
+		0,
+		&byteCode, &errorBlob);
+
+	if (errorBlob != NULL)
+	{
+		::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+		printf("Shader 파일 컴파일 에러\n");
+		return NULL;
+
+	}
+
+	if (FAILED(hr))
+	{
+		printf("Shader 파일 컴파일 에러\n");
+		return NULL;
+
+	}
+
+
+
+	std::cout << "Shader Compile Success" << std::endl;
+	return byteCode;
 }

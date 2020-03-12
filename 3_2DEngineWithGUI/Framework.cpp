@@ -3,7 +3,7 @@
 #include "Framework.h"
 #include "Window.h"
 #include "Timer.h"
-
+#include "GraphicResourceMananger.h"
 
 
 void rp::RpFramework::Init()
@@ -11,6 +11,8 @@ void rp::RpFramework::Init()
 	if (rp::DirectXDevice::Init(rp::Window::getHWND(), rp::Window::getWidth(), rp::Window::getHeight())) {
 		std::cout << "Direct X 12 Init Success" << std::endl;
 	}
+
+	rp::GraphicResourceMananger::Init();
 
 	rp::GraphicUserInterface::Init(rp::Window::getHWND());
 	rp::RpTimer::Init();

@@ -21,14 +21,18 @@ void rp::RendererWrapper::Update() noexcept
 
 }
 
-rp::IRenderer::IRenderer(std::string&& vs, std::string&& ps)
+rp::IRenderer::IRenderer()
 {
+
 }
 
 rp::IRenderer::~IRenderer()
 {
+
 }
 
 void rp::IRenderer::Draw()
 {
+
 }
+

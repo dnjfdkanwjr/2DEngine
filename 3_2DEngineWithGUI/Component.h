@@ -5,6 +5,7 @@ namespace rp {
 	class Component :
 		public rp::Base
 	{
+	protected:
 		RpGameObject* gameObject;
 	public:
 		Component(RpGameObject* gameObject,std::string&& name);

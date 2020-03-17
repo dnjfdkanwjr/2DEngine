@@ -2,6 +2,7 @@
 #include "DirectXDevice.h"
 #include "Component.h"
 #include "Singleton.h"
+#include "Mesh.h"
 namespace rp {
 
 
@@ -10,12 +11,18 @@ namespace rp {
 	{
 	protected:
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> pso{};
+		Mesh* mesh{};
+
+		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> cachedCommadList{};
 	public:
 
 		IRenderer();
 
 		virtual ~IRenderer();
-		virtual void Draw();
+		
+		void PrepareRender();
+		virtual void Draw(RpGameObject* obj)noexcept;
+		void SetMesh(Mesh* mesh) noexcept;
 	};
 
 

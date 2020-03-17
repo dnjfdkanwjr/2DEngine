@@ -27,22 +27,27 @@ struct Vertex {
 
 struct Mesh
 {
-	Microsoft::WRL::ComPtr<ID3D12Resource> vtxGPUBuffer;
-	Microsoft::WRL::ComPtr<ID3D12Resource> idxGPUBuffer;
+	Microsoft::WRL::ComPtr<ID3D12Resource> vtxGPUBuffer{};
+	Microsoft::WRL::ComPtr<ID3D12Resource> idxGPUBuffer{};
 
-	Microsoft::WRL::ComPtr<ID3D12Resource> vtxUPBuffer;
-	Microsoft::WRL::ComPtr<ID3D12Resource> idxUPBuffer;
+	Microsoft::WRL::ComPtr<ID3D12Resource> vtxUPBuffer{};
+	Microsoft::WRL::ComPtr<ID3D12Resource> idxUPBuffer{};
 
-    std::vector<Vertex>  vertice;
-    std::vector<UINT32>  indice;
+	std::vector<Vertex>  vertice{};
+	std::vector<UINT32>  indice{};
+
+
+	bool isDirty{};
+	D3D12_VERTEX_BUFFER_VIEW vbv{};
+	D3D12_INDEX_BUFFER_VIEW ibv{};
 
     Mesh();
     virtual ~Mesh();
 
     bool init();
-    D3D12_VERTEX_BUFFER_VIEW GetVerticeBufferView();
-    D3D12_INDEX_BUFFER_VIEW  GetIndiceBufferView();
-
+    D3D12_VERTEX_BUFFER_VIEW& GetVerticeBufferView()noexcept;
+    D3D12_INDEX_BUFFER_VIEW&  GetIndiceBufferView()noexcept;
+	void RecalculateVerticeAndIndiceView()  noexcept;
 
     static void MakeBoxMesh(FLOAT width, FLOAT height, FLOAT depth, Mesh* data);
     static void MakeBoxMesh2(FLOAT width, FLOAT height, FLOAT depth, Mesh* data, UINT w, UINT h, UINT d);

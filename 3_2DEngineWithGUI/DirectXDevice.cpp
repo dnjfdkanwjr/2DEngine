@@ -5,6 +5,7 @@
 #include "DirectXHelper.h"
 #include "d3dx12.h"
 
+#include "GraphicResourceMananger.h"
 #pragma comment ( lib, "d3d12.lib")
 #pragma comment ( lib, "D3DCompiler.lib")
 #pragma comment ( lib, "dxgi.lib")
@@ -278,22 +279,22 @@ void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned cha
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
 	rtvHandle.ptr += (unsigned long long)global::gRtvDescriptorSize * currentBackBuffer;
-	D3D12_RESOURCE_BARRIER barrier = {};
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = swapChainBuff[currentBackBuffer].Get();
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+
+	D3D12_RESOURCE_BARRIER barrier{ CD3DX12_RESOURCE_BARRIER::Transition(swapChainBuff[currentBackBuffer].Get(),
+		D3D12_RESOURCE_STATE_PRESENT,
+		D3D12_RESOURCE_STATE_RENDER_TARGET) };
 
 	static float clearColor[4] = { (float)r/ 255.f,(float)g / 255.f,(float)b / 255.f, (float)a / 255.f, };
 
 	commandList->ResourceBarrier(1, &barrier);
 
+
 	commandList->ClearRenderTargetView(rtvHandle, (float*)&clearColor, 0, NULL);
 	commandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
 	commandList->RSSetViewports(1, &viewRect);
 	commandList->RSSetScissorRects(1, &sissorRect);
+
+	commandList->SetGraphicsRootSignature(rp::GraphicResourceMananger::GetRootSignature().Get());
 }
 
 

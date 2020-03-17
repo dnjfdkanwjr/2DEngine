@@ -1,3 +1,4 @@
+#include <iostream>
 #include "RpGameObject.h"
 
 rp::RpGameObject::RpGameObject(float x, float y, float z,

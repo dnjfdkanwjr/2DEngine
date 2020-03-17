@@ -43,31 +43,40 @@ Mesh::~Mesh()
 
 bool Mesh::init()
 {
-    //vtxGPUBuffer = rp::DirectXDevice::createBuffer(&vertice[0], vertice.size() * sizeof(Vertex), &vtxUPBuffer);
-    //idxGPUBuffer = rp::DirectXDevice::createBuffer(&indice[0], indice.size() * sizeof(UINT32), &idxUPBuffer);
+    vtxGPUBuffer = rp::DirectXDevice::CreateBuffer(&vertice[0], vertice.size() * sizeof(Vertex), &vtxUPBuffer);
+    idxGPUBuffer = rp::DirectXDevice::CreateBuffer(&indice[0], indice.size() * sizeof(UINT32), &idxUPBuffer);
+    	
+	RecalculateVerticeAndIndiceView();
     return true;
 }
 
 
 
-D3D12_VERTEX_BUFFER_VIEW Mesh::GetVerticeBufferView()
+D3D12_VERTEX_BUFFER_VIEW& Mesh::GetVerticeBufferView() noexcept
 {
-    D3D12_VERTEX_BUFFER_VIEW vbv;
-    vbv.BufferLocation = vtxGPUBuffer->GetGPUVirtualAddress();
-    vbv.StrideInBytes = sizeof(Vertex);
-    vbv.SizeInBytes = sizeof(Vertex) * vertice.size();
+	if(isDirty)RecalculateVerticeAndIndiceView();
     return vbv;
 }
 
 
 
-D3D12_INDEX_BUFFER_VIEW Mesh::GetIndiceBufferView()
+D3D12_INDEX_BUFFER_VIEW& Mesh::GetIndiceBufferView() noexcept
 {
-    D3D12_INDEX_BUFFER_VIEW ibv;
-    ibv.BufferLocation = idxGPUBuffer->GetGPUVirtualAddress();
-    ibv.Format = DXGI_FORMAT_R32_UINT;
-    ibv.SizeInBytes = sizeof(UINT32) * indice.size();
+	if (isDirty)RecalculateVerticeAndIndiceView();
     return ibv;
+}
+
+void Mesh::RecalculateVerticeAndIndiceView() noexcept
+{
+
+	vbv.BufferLocation = vtxGPUBuffer->GetGPUVirtualAddress();
+	vbv.StrideInBytes = sizeof(Vertex);
+	vbv.SizeInBytes = sizeof(Vertex) * vertice.size();
+
+	ibv.BufferLocation = idxGPUBuffer->GetGPUVirtualAddress();
+	ibv.Format = DXGI_FORMAT_R32_UINT;
+	ibv.SizeInBytes = sizeof(UINT32) * indice.size();
+
 }
 
 Mesh* Mesh::createGrid(FLOAT width, FLOAT depth, UINT m, UINT n, float r, float g, float b)

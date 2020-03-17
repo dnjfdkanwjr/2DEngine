@@ -11,6 +11,8 @@ namespace rp {
 	public:
 		QuadRenderer();
 		virtual~QuadRenderer();
+
+
 	};
 }
 

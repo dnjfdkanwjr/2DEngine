@@ -1,8 +1,12 @@
 #pragma once
 #include "GraphicUserInterface.h"
+#include "QuadRenderer.h"
 namespace rp {
 	class RpFramework
 	{
+
+		static QuadRenderer* rendererTest;
+		static RpGameObject* testObject;
 	private:
 		static void PrepareRender();
 		static void Render();

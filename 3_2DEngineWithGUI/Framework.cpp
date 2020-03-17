@@ -4,8 +4,12 @@
 #include "Window.h"
 #include "Timer.h"
 #include "GraphicResourceMananger.h"
+#include "RpGameObject.h"
 
+#include "Mesh.h"
 
+rp::QuadRenderer* rp::RpFramework::rendererTest{};
+rp::RpGameObject* rp::RpFramework::testObject{};
 void rp::RpFramework::Init()
 {
 	if (rp::DirectXDevice::Init(rp::Window::getHWND(), rp::Window::getWidth(), rp::Window::getHeight())) {
@@ -16,16 +20,22 @@ void rp::RpFramework::Init()
 
 	rp::GraphicUserInterface::Init(rp::Window::getHWND());
 	rp::RpTimer::Init();
+
+	rendererTest = new rp::QuadRenderer();
+	testObject = new rp::RpGameObject();
+	rendererTest->SetMesh(Mesh::createGridBox(1, 1, 1, 5, 5, 5, 1, 1, 1));
 }
+
 
 
 
 
 void rp::RpFramework::Update()
 {
-	rp::RpTimer::Update();
 
+	rp::RpTimer::Update();
 	PrepareRender();
+	rendererTest->Draw(testObject);
 	Render();
 }
 

@@ -1,8 +1,10 @@
+#include <iostream>
 #include "QuadRenderer.h"
 #include "GraphicResourceMananger.h"
 
 
-rp::QuadRenderer::QuadRenderer()
+rp::QuadRenderer::QuadRenderer():
+	IRenderer()
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psDesc;
 	ZeroMemory(&psDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
@@ -51,6 +53,7 @@ rp::QuadRenderer::QuadRenderer()
 		(void**)&pso) != S_OK)
 
 	{
+		std::cout << "pso creation fail [quad renderer]" << std::endl;
 	}
 }
 

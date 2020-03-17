@@ -80,8 +80,8 @@ void rp::GraphicResourceMananger::MakeRootSignature()
 	constexpr auto slotNumbers{ 4 };
 	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[slotNumbers]{ };
-	slotRootParameter[0].InitAsConstantBufferView(0);//cameraMatrix
-	slotRootParameter[1].InitAsConstantBufferView(1);//localMatrix
+	slotRootParameter[0].InitAsConstantBufferView(0);//localMatrix
+	slotRootParameter[1].InitAsConstantBufferView(1);//camera
 	slotRootParameter[2].InitAsConstantBufferView(2);//reserve
 	slotRootParameter[3].InitAsDescriptorTable(1, &texResource, D3D12_SHADER_VISIBILITY_ALL);
 
@@ -122,9 +122,9 @@ void rp::GraphicResourceMananger::Init()
 	MakeRootSignature();
 }
 
-Microsoft::WRL::ComPtr<ID3D12RootSignature> rp::GraphicResourceMananger::GetRootSignature()
+ID3D12RootSignature* rp::GraphicResourceMananger::GetRootSignature()
 {
-	return rootSignature;
+	return rootSignature.Get();
 }
 
 std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>>& rp::GraphicResourceMananger::GetShaders()

@@ -2,19 +2,21 @@
 
 #include <DirectXMath.h>
 #include <vector>
+#include "ConstBuffer.h"
+
 namespace rp {
 	class RpGameObject;
 	class RpTransform
 	{
 
 	private:
-		DirectX::XMFLOAT4 position{};
-		DirectX::XMFLOAT4 rotation{};
-		DirectX::XMFLOAT4 scale{};
-
-		DirectX::XMFLOAT4 localPosition{};
-		DirectX::XMFLOAT4 localRotation{};
-		DirectX::XMFLOAT4 localScale{};
+		DirectX::XMFLOAT3 position{};
+		DirectX::XMFLOAT3 rotation{};
+		DirectX::XMFLOAT3 scale{};
+						
+		DirectX::XMFLOAT3 localPosition{};
+		DirectX::XMFLOAT3 localRotation{};
+		DirectX::XMFLOAT3 localScale{};
 
 
 
@@ -25,15 +27,14 @@ namespace rp {
 		RpGameObject* gameObject{};
 		RpTransform* parent{};
 		std::vector<RpTransform*> children{};	
-		 
-
+		std::vector<ConstBuffer> cbuffer{};
 
 		void DestroyChildrenRecursively(RpTransform* child);
 	public:
 		void Destroy();
 		RpTransform(RpGameObject* gameObject, RpTransform* parentGameObject= nullptr,float x = 0.f,float y = 0.f, float z =0.f,
 			float rx = 0.f, float ry = 0.f, float rz = 0.f, 
-			float sx = 0.f, float sy = 0.f, float sz = 0.f);
+			float sx = 1.f, float sy = 1.f, float sz = 1.f);
 		virtual ~RpTransform();
 
 		void SetParent(RpTransform* parent) noexcept;
@@ -45,17 +46,19 @@ namespace rp {
 
 		RpTransform const* GetParent() const noexcept;
 
-		const DirectX::XMFLOAT4& GetPosition() const noexcept;
-		const DirectX::XMFLOAT4& GetLocalPosition() const noexcept;
-
-		const DirectX::XMFLOAT4& GetRotation() const noexcept;
-		const DirectX::XMFLOAT4& GetLocalRotation() const noexcept;
-
-		const DirectX::XMFLOAT4& GetScale() const noexcept;
-		const DirectX::XMFLOAT4& GetLocalScale() const noexcept;
+		const DirectX::XMFLOAT3& GetPosition() const noexcept;
+		const DirectX::XMFLOAT3& GetLocalPosition() const noexcept;
+							  
+		const DirectX::XMFLOAT3& GetRotation() const noexcept;
+		const DirectX::XMFLOAT3& GetLocalRotation() const noexcept;
+							  
+		const DirectX::XMFLOAT3& GetScale() const noexcept;
+		const DirectX::XMFLOAT3& GetLocalScale() const noexcept;
 
 		const DirectX::XMFLOAT4X4& GetLocalToWorldMatrix() noexcept;
 
+		ID3D12DescriptorHeap* GetDescriptorHeap(int idx) noexcept;
+		ConstBuffer& GetConstBuffer();
 	};
 }
 

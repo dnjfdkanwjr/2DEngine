@@ -90,6 +90,9 @@
     <ClCompile Include="GraphicResourceMananger.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="ConstBuffer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -170,6 +173,9 @@
     <ClInclude Include="GraphicResourceMananger.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="ConstBuffer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\noisevs.hlsl">
@@ -178,7 +184,7 @@
     <None Include="Shader\noiseps.hlsl">
       <Filter>Shader</Filter>
     </None>
-    <None Include="Header.hlsl">
+    <None Include="Shader\Header.hlsl">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>

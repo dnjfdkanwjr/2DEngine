@@ -294,7 +294,7 @@ void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned cha
 	commandList->RSSetViewports(1, &viewRect);
 	commandList->RSSetScissorRects(1, &sissorRect);
 
-	commandList->SetGraphicsRootSignature(rp::GraphicResourceMananger::GetRootSignature().Get());
+	commandList->SetGraphicsRootSignature(rp::GraphicResourceMananger::GetRootSignature());
 }
 
 
@@ -316,8 +316,7 @@ void DirectXDevice::FlushAllCommandsToGPU()
 	commandAllocators[currentAllocatorIndex].SetFenceValue(fenceValue);
 }
 
-
-Microsoft::WRL::ComPtr<ID3D12Resource> DirectXDevice::CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer)
+ID3D12Resource* DirectXDevice::CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer)
 {
 
     //Reset(NULL, true);
@@ -382,17 +381,62 @@ Microsoft::WRL::ComPtr<ID3D12Resource> DirectXDevice::CreateBuffer(void* initDat
 }
 
 
-
-Microsoft::WRL::ComPtr<ID3D12Device> DirectXDevice::GetDevice()
+bool rp::DirectXDevice::CreateConstBuffer(ID3D12DescriptorHeap** descHeap, BYTE** Data, int size, ID3D12Resource** UPBuffer)
 {
-    return device;
+	D3D12_DESCRIPTOR_HEAP_DESC  cbDesc;
+	cbDesc.NumDescriptors = 1;
+	cbDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	cbDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	cbDesc.NodeMask = 0;
+
+	if (device->CreateDescriptorHeap(&cbDesc,
+		__uuidof(ID3D12DescriptorHeap),
+		(void**)descHeap) != S_OK)
+	{
+		return false;
+	}
+
+	size = (size + 255) & ~255;
+
+	if (device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(size),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		__uuidof(ID3D12Resource), (void**)UPBuffer) != S_OK)
+
+	{
+		return false;
+	}
+
+
+
+	if ((*UPBuffer)->Map(0, NULL, (void**)Data) != S_OK)
+	{
+		return false;
+	}
+
+
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
+	cbvDesc.BufferLocation = (*UPBuffer)->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = size;
+	device->CreateConstantBufferView(&cbvDesc, (*descHeap)->GetCPUDescriptorHandleForHeapStart());
+
+	return true;
 }
 
 
-
-Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> DirectXDevice::GetCommandList()
+ID3D12Device* DirectXDevice::GetDevice()
 {
-    return commandList;
+    return device.Get();
+}
+
+
+ID3D12GraphicsCommandList* DirectXDevice::GetCommandList()
+{
+    return commandList.Get();
 }
 
 //need to be revised
@@ -478,4 +522,9 @@ Microsoft::WRL::ComPtr<ID3DBlob> rp::DirectXDevice::CompileShader(LPCWSTR fileNa
 
 	std::cout << "Shader Compile Success" << std::endl;
 	return byteCode;
+}
+
+uint rp::DirectXDevice::GetCurrentAllocatorIndex()
+{
+	return currentAllocatorIndex;
 }

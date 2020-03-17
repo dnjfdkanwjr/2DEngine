@@ -10,6 +10,8 @@
 
 rp::QuadRenderer* rp::RpFramework::rendererTest{};
 rp::RpGameObject* rp::RpFramework::testObject{};
+
+rp::Camera* rp::RpFramework::cam{};
 void rp::RpFramework::Init()
 {
 	if (rp::DirectXDevice::Init(rp::Window::getHWND(), rp::Window::getWidth(), rp::Window::getHeight())) {
@@ -23,7 +25,10 @@ void rp::RpFramework::Init()
 
 	rendererTest = new rp::QuadRenderer();
 	testObject = new rp::RpGameObject();
-	rendererTest->SetMesh(Mesh::createGridBox(1, 1, 1, 5, 5, 5, 1, 1, 1));
+	cam = new rp::Camera();
+
+	rendererTest->SetMesh(Mesh::createGridBox(5, 5, 5, 5, 5, 5, 1, 1, 1));
+	//rendererTest->SetMesh(Mesh::createGrid(100, 100, 2, 5, 5, 5, 1));
 }
 
 
@@ -32,10 +37,15 @@ void rp::RpFramework::Init()
 
 void rp::RpFramework::Update()
 {
-
 	rp::RpTimer::Update();
+
+	cam->Update();
+
 	PrepareRender();
+
+	rp::DirectXDevice::GetCommandList()->SetGraphicsRootConstantBufferView(1, cam->GetConstBuffer().GetUploadBuffer()->GetGPUVirtualAddress());
 	rendererTest->Draw(testObject);
+
 	Render();
 }
 
@@ -47,7 +57,7 @@ void rp::RpFramework::Exit()
 
 void rp::RpFramework::PrepareRender()
 {
-	rp::DirectXDevice::PrepareRender(25, 25, 25,255);
+	rp::DirectXDevice::PrepareRender(0, 0, 0,255);
 	rp::GraphicUserInterface::PrepareRender();
 }
 

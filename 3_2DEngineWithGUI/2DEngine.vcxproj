@@ -127,6 +127,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Component.cpp" />
     <ClCompile Include="Configuration.cpp" />
+    <ClCompile Include="ConstBuffer.cpp" />
     <ClCompile Include="DirectXDevice.cpp" />
     <ClCompile Include="Framework.cpp" />
     <ClCompile Include="GraphicUserInterface.cpp" />
@@ -151,6 +152,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Component.h" />
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="ConstBuffer.h" />
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DirectXDevice.h" />
     <ClInclude Include="DirectXHelper.h" />
@@ -175,11 +177,15 @@
     <ClInclude Include="Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Header.hlsl" />
     <None Include="Shader\noiseps.hlsl">
       <FileType>Document</FileType>
     </None>
     <None Include="Shader\noisevs.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shader\Header.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

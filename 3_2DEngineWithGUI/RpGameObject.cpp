@@ -6,7 +6,7 @@ rp::RpGameObject::RpGameObject(float x, float y, float z,
 	float sx, float sy, float sz, 
 	RpTransform* parentGameObject):
 	Base(std::string("GameObject")),
-	transform{this,parentGameObject}
+	transform{this,parentGameObject,x,y,z,rx,ry,rz,sx,sy,sz}
 {
 
 }

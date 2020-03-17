@@ -28,7 +28,7 @@ void rp::GraphicUserInterface::Init(HWND hwnd)
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 	ImGui_ImplWin32_Init(hwnd);
 	ImGui_ImplDX12_Init(
-		rp::DirectXDevice::GetDevice().Get(),
+		rp::DirectXDevice::GetDevice(),
 		konstant::kNumberOfAllocators,
 		DXGI_FORMAT_R8G8B8A8_UNORM,
 		srvDescHeap.Get(),

@@ -89,13 +89,14 @@ namespace rp {
 		static void Render();
         static void FlushAllCommandsToGPU();
 
-		static Microsoft::WRL::ComPtr<ID3D12Device> GetDevice();
-		static Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GetCommandList();
-        static Microsoft::WRL::ComPtr<ID3D12Resource> CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer);
+		static ID3D12Device* GetDevice();
+		static ID3D12GraphicsCommandList* GetCommandList();
+        static ID3D12Resource* CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer);
+		static bool CreateConstBuffer(ID3D12DescriptorHeap** descHeap, BYTE** Data, int size, ID3D12Resource** UPBuffer);
 
 		static void ResizeSwapChain(HWND hWnd, int width, int height);
 		static Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(LPCWSTR fileName, LPCSTR entry, LPCSTR target);
-    
+		static uint GetCurrentAllocatorIndex();
 	};
 
 

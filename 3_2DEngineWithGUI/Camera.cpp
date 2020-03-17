@@ -1,5 +1,5 @@
 #include "Camera.h"
-
+using namespace rp;
 Camera::Camera(float tx, float ty, float tz, float rx, float ry, float rz)
 {
 
@@ -17,6 +17,10 @@ Camera::Camera(float tx, float ty, float tz, float rx, float ry, float rz)
     nearD = FLOAT(0.01);
     farD = FLOAT(1000.0);
     fov = DirectX::XMConvertToRadians(60);
+
+	for (int i = 0; i < konstant::kNumberOfAllocators; ++i) {
+		cbuffer.emplace_back(sizeof(cb::CameraBuffer));
+	}
 }
 
 
@@ -51,4 +55,17 @@ DirectX::XMMATRIX Camera::GetView()
 DirectX::XMMATRIX Camera::GetProjection()
 {
     return DirectX::XMMatrixPerspectiveFovLH(fov, aspect, nearD, farD);
+}
+
+void rp::Camera::Update()
+{
+	auto curBuffer = ((cb::CameraBuffer*)(cbuffer[rp::DirectXDevice::GetCurrentAllocatorIndex()].GetDatum()));
+
+	DirectX::XMStoreFloat4x4(&curBuffer->view, DirectX::XMMatrixTranspose(GetView()));
+	DirectX::XMStoreFloat4x4(&curBuffer->proj, DirectX::XMMatrixTranspose(GetProjection()));
+}
+
+ConstBuffer& rp::Camera::GetConstBuffer() noexcept
+{
+	return cbuffer[rp::DirectXDevice::GetCurrentAllocatorIndex()];	
 }

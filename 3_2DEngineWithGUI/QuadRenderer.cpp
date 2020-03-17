@@ -10,7 +10,7 @@ rp::QuadRenderer::QuadRenderer():
 	ZeroMemory(&psDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 
 	psDesc.InputLayout = { rp::inputlayout::kInputLayout, 4 };
-	psDesc.pRootSignature = GraphicResourceMananger::GetRootSignature().Get();
+	psDesc.pRootSignature = GraphicResourceMananger::GetRootSignature();
 
 	auto shaders = GraphicResourceMananger::GetShaders();
 

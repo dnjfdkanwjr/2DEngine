@@ -43,14 +43,16 @@ void rp::IRenderer::Draw(RpGameObject* obj) noexcept
 {
 	
 	cachedCommadList->SetPipelineState(pso.Get());
-	//step A cbuffer setting. < Local Matrix >
-
-	//step B cbuffer material data setting < Texture Number >
-
 	cachedCommadList->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//if (mesh == nullptr) return;
-	cachedCommadList->IASetVertexBuffers(0,1,&mesh->GetVerticeBufferView());
+	cachedCommadList->IASetVertexBuffers(0, 1, &mesh->GetVerticeBufferView());
 	cachedCommadList->IASetIndexBuffer(&mesh->GetIndiceBufferView());
+
+
+	//step A cbuffer setting. < Local Matrix >
+	obj->GetTransform().GetLocalToWorldMatrix();
+	//step B cbuffer material data setting < Texture Number >
+	cachedCommadList->SetGraphicsRootConstantBufferView(0,obj->GetTransform().GetConstBuffer().GetUploadBuffer()->GetGPUVirtualAddress());
 
 	cachedCommadList->DrawIndexedInstanced(mesh->indice.size(), 1, 0, 0, 0);
 }

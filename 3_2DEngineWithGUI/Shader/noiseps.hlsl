@@ -3,9 +3,10 @@
 
 float4 PS(PixelInputType input) : SV_TARGET
 {
+    float4 returnCol = input.position;
+   
 
-
-    return float4(1,1,0,1);
+    return input.color;
 
 }
 

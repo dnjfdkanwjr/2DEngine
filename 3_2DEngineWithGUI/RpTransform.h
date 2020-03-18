@@ -58,7 +58,40 @@ namespace rp {
 		const DirectX::XMFLOAT4X4& GetLocalToWorldMatrix() noexcept;
 
 		ID3D12DescriptorHeap* GetDescriptorHeap(int idx) noexcept;
+		ID3D12DescriptorHeap* GetDescriptorHeap() noexcept;
 		ConstBuffer& GetConstBuffer();
+
+
+		void SetPosition(float x, float y, float z)noexcept;
+
+		void SetPosition(const DirectX::XMFLOAT3& position) noexcept;
+		void SetPosition(DirectX::XMFLOAT3&& position)noexcept;
+
+
+		void SetRotation(float x, float y, float z)noexcept;
+
+		void SetRotation(const DirectX::XMFLOAT3& rotation) noexcept;
+		void SetRotation(DirectX::XMFLOAT3&& rotation)noexcept;
+
+
+
+
+		void SetLocalPosition(float x, float y, float z)noexcept;
+
+		void SetLocalPosition(const DirectX::XMFLOAT3& position) noexcept;
+		void SetLocalPosition(DirectX::XMFLOAT3&& position)noexcept;
+
+
+		void SetLocalRotation(float x, float y, float z)noexcept;
+
+		void SetLocalRotation(const DirectX::XMFLOAT3& rotation) noexcept;
+		void SetLocalRotation(DirectX::XMFLOAT3&& rotation)noexcept;
+
+
+		void SetLocalScale(float x, float y, float z)noexcept;
+
+		void SetLocalScale(const DirectX::XMFLOAT3& scale) noexcept;
+		void SetLocalScale(DirectX::XMFLOAT3&& scale)noexcept;
 	};
 }
 

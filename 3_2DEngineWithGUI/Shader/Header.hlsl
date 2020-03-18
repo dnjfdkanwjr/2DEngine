@@ -13,12 +13,13 @@ SamplerComparisonState gSamShadow : register(s6);
 cbuffer cbTransformPerObjects : register(b0)
 {	
 	matrix world;
+
 };
 
 cbuffer cbTransformInCamera : register(b1)
 {
-	matrix view;
-	matrix proj;
+	//matrix view;
+	//matrix proj;
 };
 
 cbuffer cbRenderingInformation : register(b2)

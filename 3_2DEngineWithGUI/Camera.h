@@ -1,3 +1,4 @@
+#pragma once
 #include <DirectXMath.h>
 #include "ConstBuffer.h"
 #include "DirectXDevice.h"
@@ -12,10 +13,10 @@ namespace rp {
 		float nearD;
 		float farD;
 
-		float tx, ty, tz;
-		float rx, ry, rz;
-
-		std::vector<ConstBuffer> cbuffer;
+		DirectX::XMFLOAT3 position{};
+		DirectX::XMFLOAT3 rotation{};
+		
+		std::vector<ConstBuffer> cbuffer{};
 
 	public:
 
@@ -31,5 +32,8 @@ namespace rp {
 		void Update();
 
 		ConstBuffer& GetConstBuffer()noexcept;
+#ifdef _DEBUG
+		void GUIRender();
+#endif
 	};
 }

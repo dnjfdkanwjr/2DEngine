@@ -74,14 +74,16 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 7> rp::GraphicResourceMananger::Ge
 void rp::GraphicResourceMananger::MakeRootSignature()
 {
 
-	CD3DX12_DESCRIPTOR_RANGE texResource;
+	CD3DX12_DESCRIPTOR_RANGE texResource,cbvTable,cbvTableForCam;
 	texResource.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 48, 0, 0);
+	cbvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
+	cbvTableForCam.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
 
 	constexpr auto slotNumbers{ 4 };
 	// Root parameter can be a table, root descriptor or root constants.
 	CD3DX12_ROOT_PARAMETER slotRootParameter[slotNumbers]{ };
-	slotRootParameter[0].InitAsConstantBufferView(0);//localMatrix
-	slotRootParameter[1].InitAsConstantBufferView(1);//camera
+	slotRootParameter[0].InitAsDescriptorTable(1,&cbvTable);//localMatrix
+	slotRootParameter[1].InitAsDescriptorTable(1, &cbvTableForCam);//localMatrix
 	slotRootParameter[2].InitAsConstantBufferView(2);//reserve
 	slotRootParameter[3].InitAsDescriptorTable(1, &texResource, D3D12_SHADER_VISIBILITY_ALL);
 

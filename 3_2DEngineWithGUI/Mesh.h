@@ -45,8 +45,8 @@ struct Mesh
     virtual ~Mesh();
 
     bool init();
-    D3D12_VERTEX_BUFFER_VIEW& GetVerticeBufferView()noexcept;
-    D3D12_INDEX_BUFFER_VIEW&  GetIndiceBufferView()noexcept;
+    D3D12_VERTEX_BUFFER_VIEW GetVerticeBufferView()noexcept;
+    D3D12_INDEX_BUFFER_VIEW  GetIndiceBufferView()noexcept;
 	void RecalculateVerticeAndIndiceView()  noexcept;
 
     static void MakeBoxMesh(FLOAT width, FLOAT height, FLOAT depth, Mesh* data);

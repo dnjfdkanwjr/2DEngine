@@ -91,8 +91,15 @@ namespace rp {
 
 		static ID3D12Device* GetDevice();
 		static ID3D12GraphicsCommandList* GetCommandList();
-        static ID3D12Resource* CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer);
+
+        //static ID3D12Resource* CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer);//deprecatred
+
 		static bool CreateConstBuffer(ID3D12DescriptorHeap** descHeap, BYTE** Data, int size, ID3D12Resource** UPBuffer);
+
+		static Microsoft::WRL::ComPtr<ID3D12Resource> CreateDefaultBuffer(
+			const void* initData,
+			UINT64 byteSize,
+			Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
 
 		static void ResizeSwapChain(HWND hWnd, int width, int height);
 		static Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(LPCWSTR fileName, LPCSTR entry, LPCSTR target);

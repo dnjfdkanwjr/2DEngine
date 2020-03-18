@@ -43,38 +43,35 @@ void rp::GraphicUserInterface::Init(HWND hwnd)
 
 void rp::GraphicUserInterface::PrepareRender()
 {
-	static bool show_demo_window = true;
-	static bool show_another_window = true;
+	//static bool show_demo_window = true;
+	//static bool show_another_window = true;
 
 	ImGui_ImplDX12_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
 
-	{
-		ImGui::Begin("Hello, world!");
-		const std::string baseString{ "currentFrame  " };
-		auto tempString = baseString + std::to_string(1.f / rp::RpTimer::GetDelta());
-		ImGui::Text(tempString.c_str());
-		ImGui::End();
-	}
+	//{
+	//	ImGui::Begin("Hello, world!");
+	//	const std::string baseString{ "currentFrame  " };
+	//	auto tempString = baseString + std::to_string(1.f / rp::RpTimer::GetDelta());
+	//	ImGui::Text(tempString.c_str());
+	//	ImGui::End();
+	//}
 
 
-	if (show_another_window)
-	{
-		ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-		ImGui::Text("Hello from another window!");
-		if (ImGui::Button("Close Me"))
-			show_another_window = false;
-		ImGui::End();
-	}
+	//if (show_another_window)
+	//{
+	//	ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+	//	ImGui::Text("Hello from another window!");
+	//	if (ImGui::Button("Close Me"))
+	//		show_another_window = false;
+	//	ImGui::End();
+	//}
 }
 
 
 void rp::GraphicUserInterface::Render()
 {
-
-
-
 	rp::GraphicUserInterface::cachedCommandList->SetDescriptorHeaps(1, srvDescHeap.GetAddressOf());
 	ImGui::Render();
 	ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), rp::GraphicUserInterface::cachedCommandList.Get());

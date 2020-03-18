@@ -38,7 +38,7 @@ LRESULT CALLBACK rp::windowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPA
 		if (wParam != SIZE_MINIMIZED) {
 			ImGui_ImplDX12_InvalidateDeviceObjects();
 			//CleanupRenderTarget();
-			//rp::DirectXDevice::ResizeSwapChain(hWnd, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
+			rp::DirectXDevice::ResizeSwapChain(hWnd, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam));
 		
 			ImGui_ImplDX12_CreateDeviceObjects();
 		}
@@ -64,8 +64,8 @@ bool rp::Window::init(bool Debug, HINSTANCE hInstance, int nCmdShow, LPCWSTR CLS
 
 	rp::Window::handle_instance = hInstance;
 
-	rp::Window::setWidth(1400);
-	rp::Window::setHeight(800);
+	rp::Window::setWidth(1600);
+	rp::Window::setHeight(900);
 
 	rp::Window::class_name = (CLSName);
 	rp::Window::application_name = (APPName);

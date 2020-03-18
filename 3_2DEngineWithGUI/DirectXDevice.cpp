@@ -240,9 +240,12 @@ bool DirectXDevice::Init(HWND hWnd, int width, int height)
 
 
 	//Temporary Codes For Making Resource
-	auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
-	alloc->Reset();
-	commandList->Reset(alloc, nullptr);
+	//auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
+	//alloc->Reset();
+
+	commandList->Close();
+	commandList->Reset(commandAllocators[currentAllocatorIndex].GetAllocator().Get(), nullptr);
+
     commandList->ResourceBarrier(1, &barrier);
 
 	FlushAllCommandsToGPU();
@@ -264,7 +267,11 @@ void rp::DirectXDevice::WaitForLastFrameGPUSynchronization()
 void rp::DirectXDevice::WaitForNextFrameGPUSynchronization()
 {
 	currentAllocatorIndex = ( currentAllocatorIndex + 1 ) % konstant::kNumberOfAllocators;
-	WaitForLastFrameGPUSynchronization();
+	while (fence.Get()->GetCompletedValue() < commandAllocators[currentAllocatorIndex].GetFenceValue())
+	{
+		std::this_thread::yield();
+	}
+
 }
 
 void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
@@ -272,8 +279,8 @@ void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned cha
 	WaitForNextFrameGPUSynchronization();
 
 	auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
-	alloc->Reset();
-	commandList->Reset(alloc,  nullptr);	
+	ThrowIfFailed(alloc->Reset());
+	commandList->Reset(alloc, nullptr);	
 
 	currentBackBuffer = swapChain->GetCurrentBackBufferIndex();
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
@@ -289,7 +296,9 @@ void DirectXDevice::PrepareRender(unsigned char r, unsigned char g, unsigned cha
 	commandList->ResourceBarrier(1, &barrier);
 
 
-	commandList->ClearRenderTargetView(rtvHandle, (float*)&clearColor, 0, NULL);
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, NULL);
+	commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, NULL);
+
 	commandList->OMSetRenderTargets(1, &rtvHandle, true, &dsvHandle);
 	commandList->RSSetViewports(1, &viewRect);
 	commandList->RSSetScissorRects(1, &sissorRect);
@@ -304,7 +313,6 @@ void DirectXDevice::Render()
     commandList->ResourceBarrier(1, &barrier);
 	FlushAllCommandsToGPU();
 	swapChain->Present(0, 0);
-
 }
 
 void DirectXDevice::FlushAllCommandsToGPU()
@@ -316,69 +324,6 @@ void DirectXDevice::FlushAllCommandsToGPU()
 	commandAllocators[currentAllocatorIndex].SetFenceValue(fenceValue);
 }
 
-ID3D12Resource* DirectXDevice::CreateBuffer(void* initData, UINT64 size, ID3D12Resource** UPBuffer)
-{
-
-    //Reset(NULL, true);
-
-    ID3D12Resource* defaultBuffer = NULL;
-    D3D12_RESOURCE_DESC   buffer = CD3DX12_RESOURCE_DESC::Buffer(size);
-
-    D3D12_HEAP_PROPERTIES defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-
-
-    if (device->CreateCommittedResource(&defaultHeap,
-        D3D12_HEAP_FLAG_NONE,
-        &buffer,
-        D3D12_RESOURCE_STATE_COMMON,
-        nullptr,
-        __uuidof(ID3D12Resource), (void**)&defaultBuffer) != S_OK)
-    { 
-        return NULL;
-    }
-
-
-
-    D3D12_HEAP_PROPERTIES uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-
-    if (device->CreateCommittedResource(&uploadHeap,
-        D3D12_HEAP_FLAG_NONE,
-        &buffer,
-        D3D12_RESOURCE_STATE_GENERIC_READ,
-        nullptr,
-        __uuidof(ID3D12Resource), (void**)UPBuffer) != S_OK)
-    {
-        return NULL;
-    }
-
-
-
-    // Describe the data we want to copy into the default buffer.
-    D3D12_SUBRESOURCE_DATA subResourceData;
-    ZeroMemory(&subResourceData, sizeof(D3D12_SUBRESOURCE_DATA));
-
-    subResourceData.pData = initData;
-    subResourceData.RowPitch = (LONG_PTR)size;
-    subResourceData.SlicePitch = subResourceData.RowPitch;
-
-    D3D12_RESOURCE_BARRIER barrier;
-
-    barrier = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer,
-        D3D12_RESOURCE_STATE_COMMON,
-        D3D12_RESOURCE_STATE_COPY_DEST);
-
-    commandList->ResourceBarrier(1, &barrier);
-
-    UpdateSubresources<1>(commandList.Get(), defaultBuffer, *UPBuffer, 0, 0, 1, &subResourceData);
-    barrier = CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer,
-        D3D12_RESOURCE_STATE_COPY_DEST,
-        D3D12_RESOURCE_STATE_GENERIC_READ);
-
-    commandList->ResourceBarrier(1, &barrier);
-
-    FlushAllCommandsToGPU();
-    return defaultBuffer;
-}
 
 
 bool rp::DirectXDevice::CreateConstBuffer(ID3D12DescriptorHeap** descHeap, BYTE** Data, int size, ID3D12Resource** UPBuffer)
@@ -427,6 +372,64 @@ bool rp::DirectXDevice::CreateConstBuffer(ID3D12DescriptorHeap** descHeap, BYTE*
 	return true;
 }
 
+Microsoft::WRL::ComPtr<ID3D12Resource> rp::DirectXDevice::CreateDefaultBuffer(const void* initData, UINT64 byteSize, Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer)
+{
+	ComPtr<ID3D12Resource> defaultBuffer;
+
+	// Create the actual default buffer resource.
+	ThrowIfFailed(device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(byteSize),
+		D3D12_RESOURCE_STATE_COMMON,
+		nullptr,
+		IID_PPV_ARGS(defaultBuffer.GetAddressOf())));
+
+	// In order to copy CPU memory data into our default buffer, we need to create
+	// an intermediate upload heap. 
+	ThrowIfFailed(device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(byteSize),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(uploadBuffer.GetAddressOf())));
+
+
+	// Describe the data we want to copy into the default buffer.
+	D3D12_SUBRESOURCE_DATA subResourceData = {};
+	subResourceData.pData = initData;
+	subResourceData.RowPitch = byteSize;
+	subResourceData.SlicePitch = subResourceData.RowPitch;
+
+	// Schedule to copy the data to the default buffer resource.  At a high level, the helper function UpdateSubresources
+	// will copy the CPU memory into the intermediate upload heap.  Then, using ID3D12CommandList::CopySubresourceRegion,
+	// the intermediate upload heap data will be copied to mBuffer.
+
+	WaitForLastFrameGPUSynchronization();
+
+	auto alloc = commandAllocators[currentAllocatorIndex].GetAllocator().Get();
+	ThrowIfFailed(alloc->Reset());
+	commandList->Reset(alloc, nullptr);
+
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),
+		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST));
+
+	UpdateSubresources<1>(commandList.Get(), defaultBuffer.Get(), uploadBuffer.Get(), 0, 0, 1, &subResourceData);
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(defaultBuffer.Get(),
+		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
+
+	FlushAllCommandsToGPU();
+	WaitForLastFrameGPUSynchronization();
+
+	// Note: uploadBuffer has to be kept alive after the above function calls because
+	// the command list has not been executed yet that performs the actual copy.
+	// The caller can Release the uploadBuffer after it knows the copy has been executed.
+
+
+	return defaultBuffer;
+}
+
 
 ID3D12Device* DirectXDevice::GetDevice()
 {
@@ -444,35 +447,36 @@ ID3D12GraphicsCommandList* DirectXDevice::GetCommandList()
 void rp::DirectXDevice::ResizeSwapChain(HWND hWnd, int width, int height)
 {
 
+	//WaitForLastFrameGPUSynchronization();
 
-	//Reset(nullptr,true);
-	DXGI_SWAP_CHAIN_DESC1 sd;
-	swapChain->GetDesc1(&sd);
-	sd.Width = width;
-	sd.Height = height;
+	////Reset(nullptr,true);
+	//DXGI_SWAP_CHAIN_DESC1 sd;
+	//swapChain->GetDesc1(&sd);
+	//sd.Width = width;
+	//sd.Height = height;
 
 
-	ComPtr<IDXGISwapChain1> swapChainLocal;
+	//ComPtr<IDXGISwapChain1> swapChainLocal;
 
-	ThrowIfFailed(factory->CreateSwapChainForHwnd(
-		commandQueue.Get(),        // Swap chain needs the queue so that it can force a flush on it.
-		hWnd,
-		&sd,
-		nullptr,
-		nullptr,
-		&swapChainLocal
-	));
+	//ThrowIfFailed(factory->CreateSwapChainForHwnd(
+	//	commandQueue.Get(),        // Swap chain needs the queue so that it can force a flush on it.
+	//	hWnd,
+	//	&sd,
+	//	nullptr,
+	//	nullptr,
+	//	&swapChainLocal
+	//));
 
-	if (isTearingSupport)
-	{
-		// When tearing support is enabled we will handle ALT+Enter key presses in the
-		// window message loop rather than let DXGI handle it by calling SetFullscreenState.
-		factory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER);
-	}
+	//if (isTearingSupport)
+	//{
+	//	// When tearing support is enabled we will handle ALT+Enter key presses in the
+	//	// window message loop rather than let DXGI handle it by calling SetFullscreenState.
+	//	factory->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER);
+	//}
 
-	(swapChainLocal->QueryInterface(IID_PPV_ARGS(&swapChain)));
+	//(swapChainLocal->QueryInterface(IID_PPV_ARGS(&swapChain)));
 
-	FlushAllCommandsToGPU();
+	//FlushAllCommandsToGPU();
 
 	//IDXGISwapChain1* swapChain1 =  nullptr;
 	//swapChain1->QueryInterface(IID_PPV_ARGS(&swapChain));

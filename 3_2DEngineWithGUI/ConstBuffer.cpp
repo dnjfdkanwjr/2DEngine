@@ -4,6 +4,7 @@
 
 rp::ConstBuffer::ConstBuffer(int size)
 {
+
 	D3D12_DESCRIPTOR_HEAP_DESC  cbDesc;
 	cbDesc.NumDescriptors = 1;
 	cbDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
@@ -12,9 +13,9 @@ rp::ConstBuffer::ConstBuffer(int size)
 
 	if (rp::DirectXDevice::GetDevice()->CreateDescriptorHeap(&cbDesc,
 		__uuidof(ID3D12DescriptorHeap),
-		(void**)cbdescHeap.GetAddressOf()) != S_OK)
+		(void**)&cbdescHeap) != S_OK)
 	{
-	
+		std::cout << "fail" << std:: endl;
 	}
 
 	size = (size + 255) & ~255;
@@ -25,21 +26,25 @@ rp::ConstBuffer::ConstBuffer(int size)
 		&CD3DX12_RESOURCE_DESC::Buffer(size),
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		__uuidof(ID3D12Resource), (void**)cbUPBuffer.GetAddressOf()) != S_OK)
+		__uuidof(ID3D12Resource), (void**)&cbUPBuffer) != S_OK)
 
 	{
+		std::cout << "fail" << std::endl;
 
 	}
 
 	if (cbUPBuffer->Map(0, nullptr, (void**)&cbData) != S_OK)
 	{
-		
+		std::cout << "fail" << std::endl;
 	}
 
 	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc;
 	cbvDesc.BufferLocation = cbUPBuffer->GetGPUVirtualAddress();
 	cbvDesc.SizeInBytes = size;
+
 	rp::DirectXDevice::GetDevice()->CreateConstantBufferView(&cbvDesc, (cbdescHeap)->GetCPUDescriptorHandleForHeapStart());
+
+	std::cout << "making" << std::endl;
 
 }
 

@@ -21,7 +21,9 @@ namespace rp {
 		virtual void Start() {};
 		virtual void Update() {};
 
-
+#ifdef _DEBUG
+		void GUIRener();
+#endif
 	};
 }
 

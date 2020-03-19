@@ -42,12 +42,9 @@ void rp::RpGameObject::GUIRener()
 
 
 	static float rotation[3]{};
-	ImGui::SliderFloat3("rotation ", rotation, -50.f, 50.f);
+	ImGui::SliderFloat3("rotation ", rotation, -360.f, 360.f);
 
-	this->rotation.x = DirectX::XMConvertToRadians(rotation[0]);
-	this->rotation.y = DirectX::XMConvertToRadians(rotation[1]);
-	this->rotation.z = DirectX::XMConvertToRadians(rotation[2]);
-	transform.SetLocalRotation((DirectX::XMFLOAT3&)rotation);
+	transform.SetLocalRotation(rotation[0], rotation[1], rotation[2]);
 
 	static float scale[3]{1,1,1};
 	ImGui::SliderFloat3("scale ", scale, -50.f, 50.f);

@@ -25,6 +25,18 @@ struct Vertex {
         FLOAT u, FLOAT v);
 };
 
+
+struct Material {
+	UINT32 textureNumber{};
+};
+
+struct SubMesh {
+	Material material{};
+	UINT32 startVertex{};
+	UINT32 startIndex{};
+	UINT32 lastIndex{};
+};
+
 struct Mesh
 {
 	Microsoft::WRL::ComPtr<ID3D12Resource> vtxGPUBuffer{};
@@ -35,9 +47,10 @@ struct Mesh
 
 	std::vector<Vertex>  vertice{};
 	std::vector<UINT32>  indice{};
-
+	std::vector<SubMesh> subMeshes{};
 
 	bool isDirty{};
+
 	D3D12_VERTEX_BUFFER_VIEW vbv{};
 	D3D12_INDEX_BUFFER_VIEW ibv{};
 

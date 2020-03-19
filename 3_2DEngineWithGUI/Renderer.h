@@ -1,4 +1,6 @@
 #pragma once
+#include <vector>
+#include "ConstBuffer.h"
 #include "DirectXDevice.h"
 #include "Component.h"
 #include "Singleton.h"
@@ -16,9 +18,9 @@ namespace rp {
 
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> cachedCommadList{};
 
-		ID3D12DescriptorHeap* cbdescHeap;
-		ID3D12Resource* cbUPBuffer;
-		BYTE* cbData;
+
+
+		std::vector<ConstBuffer> cbuffer{};
 
 	public:
 
@@ -30,7 +32,6 @@ namespace rp {
 		virtual void Draw(RpGameObject* obj,Camera* cam)noexcept;
 		void SetMesh(Mesh* mesh) noexcept;
 
-		bool createConstBuffer(ID3D12DescriptorHeap** descHeap, BYTE** Data, int size, ID3D12Resource** UPBuffer);
 	};
 
 

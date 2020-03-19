@@ -192,9 +192,9 @@ void rp::RpTransform::SetLocalPosition(DirectX::XMFLOAT3&& position) noexcept
 
 void rp::RpTransform::SetLocalRotation(float x, float y, float z) noexcept
 {
-	this->localRotation.x = x;
-	this->localRotation.y = y;
-	this->localRotation.z = z;
+	this->localRotation.x = DirectX::XMConvertToRadians(x);
+	this->localRotation.y = DirectX::XMConvertToRadians(y);
+	this->localRotation.z = DirectX::XMConvertToRadians(z);
 }
 
 void rp::RpTransform::SetLocalRotation(const DirectX::XMFLOAT3& rotation) noexcept

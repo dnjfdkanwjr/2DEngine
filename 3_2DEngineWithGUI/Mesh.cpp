@@ -28,15 +28,13 @@ Vertex::Vertex(FLOAT px, FLOAT py, FLOAT pz,
 Mesh::Mesh()
 {
 
-
 }
 
 
 
 Mesh::~Mesh()
 {
-    vertice.clear();
-    indice.clear();
+
 }
 
 
@@ -44,21 +42,13 @@ Mesh::~Mesh()
 bool Mesh::init()
 {
     vtxGPUBuffer = rp::DirectXDevice::CreateDefaultBuffer(&vertice[0], vertice.size() * sizeof(Vertex), vtxUPBuffer);
-
     idxGPUBuffer = rp::DirectXDevice::CreateDefaultBuffer(&indice[0], indice.size() * sizeof(UINT32),idxUPBuffer);
-    	
-	//for (auto&& i : vertice) {
-	//	std::cout << i.position.x << " ";
-	//	std::cout << i.position.y << " ";
-	//	std::cout << i.position.z << " "<<std::endl;
-	//}
+	RecalculateVerticeAndIndiceView();
 
-	//for (auto&& i : indice) {
-	//	std::cout <<i << " ";
-	//}
-	//RecalculateVerticeAndIndiceView();
-
-	std::cout << "hi" << std::endl;
+	subMeshes.emplace_back();
+	subMeshes[subMeshes.size() - 1].lastIndex = indice.size();
+	subMeshes[subMeshes.size() - 1].startIndex = 0;
+	subMeshes[subMeshes.size() - 1].startVertex = 0;
     return true;
 }
 
@@ -69,10 +59,10 @@ D3D12_VERTEX_BUFFER_VIEW Mesh::GetVerticeBufferView() noexcept
 	//if(isDirty)RecalculateVerticeAndIndiceView();
 
 
-	D3D12_VERTEX_BUFFER_VIEW vbv{};
-	vbv.BufferLocation = vtxGPUBuffer->GetGPUVirtualAddress();
-	vbv.StrideInBytes = sizeof(Vertex);
-	vbv.SizeInBytes = sizeof(Vertex) * vertice.size();
+	//D3D12_VERTEX_BUFFER_VIEW vbv{};
+	//vbv.BufferLocation = vtxGPUBuffer->GetGPUVirtualAddress();
+	//vbv.StrideInBytes = sizeof(Vertex);
+	//vbv.SizeInBytes = sizeof(Vertex) * vertice.size();
 
     return vbv;
 }
@@ -83,10 +73,10 @@ D3D12_INDEX_BUFFER_VIEW Mesh::GetIndiceBufferView() noexcept
 {
 	//if (isDirty)RecalculateVerticeAndIndiceView();
 
-	D3D12_INDEX_BUFFER_VIEW ibv{};
-	ibv.BufferLocation = idxGPUBuffer->GetGPUVirtualAddress();
-	ibv.Format = DXGI_FORMAT_R32_UINT;
-	ibv.SizeInBytes = sizeof(UINT32) * indice.size();
+	//D3D12_INDEX_BUFFER_VIEW ibv{};
+	//ibv.BufferLocation = idxGPUBuffer->GetGPUVirtualAddress();
+	//ibv.Format = DXGI_FORMAT_R32_UINT;
+	//ibv.SizeInBytes = sizeof(UINT32) * indice.size();
 
 
     return ibv;

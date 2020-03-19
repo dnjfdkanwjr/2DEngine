@@ -20,5 +20,7 @@ namespace cb {
 		DirectX::XMFLOAT4X4 proj;
 	};
 
-
+	struct ObjectBuffer {
+		DirectX::XMFLOAT4X4 worldViewProj;
+	};
 }

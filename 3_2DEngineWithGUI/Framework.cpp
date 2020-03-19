@@ -32,10 +32,11 @@ void rp::RpFramework::Init()
 	testObject = new rp::RpGameObject();
 	cam = new rp::Camera();
 
-	//Mesh* mesh = new Mesh();
-	//Mesh::MakeBoxMesh(1, 1, 1, mesh);
-	//rendererTest->SetMesh(mesh);
-	rendererTest->SetMesh(Mesh::createGrid(100, 100, 100, 100, 0, 0, 0));
+	Mesh* mesh = new Mesh();
+	Mesh::MakeBoxMesh(1, 1, 1, mesh);
+	rendererTest->SetMesh(mesh);
+	//rendererTest->SetMesh(Mesh::createGrid(100, 100, 100, 100, 0, 0, 0));
+	//rendererTest->SetMesh(Mesh::createGridBox(5,5,5,5,5,5,1,1,1));
 }
 
 

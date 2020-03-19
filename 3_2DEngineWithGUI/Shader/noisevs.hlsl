@@ -15,5 +15,6 @@ PixelInputType VS(VertexInputType input)
 
 	output.color = input.position;
 	output.uv = input.uv;
+    
     return output;
 }
